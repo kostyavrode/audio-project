@@ -1,0 +1,17 @@
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\bin\Debug\net8.0\AuthService.Infrastructure.deps.json
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\bin\Debug\net8.0\AuthService.Infrastructure.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\bin\Debug\net8.0\AuthService.Infrastructure.pdb
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\bin\Debug\net8.0\AuthService.Application.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\bin\Debug\net8.0\AuthService.Domain.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\bin\Debug\net8.0\AuthService.Domain.pdb
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\bin\Debug\net8.0\AuthService.Application.pdb
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\AuthService.Infrastructure.csproj.AssemblyReference.cache
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\AuthService.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\AuthService.Infrastructure.AssemblyInfoInputs.cache
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\AuthService.Infrastructure.AssemblyInfo.cs
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\AuthService.Infrastructure.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\AuthServ.03063B79.Up2Date
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\AuthService.Infrastructure.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\refint\AuthService.Infrastructure.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\AuthService.Infrastructure.pdb
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Infrastructure\obj\Debug\net8.0\ref\AuthService.Infrastructure.dll

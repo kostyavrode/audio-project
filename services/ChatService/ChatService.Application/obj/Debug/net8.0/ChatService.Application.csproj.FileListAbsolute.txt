@@ -1,0 +1,15 @@
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\bin\Debug\net8.0\ChatService.Application.deps.json
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\bin\Debug\net8.0\ChatService.Application.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\bin\Debug\net8.0\ChatService.Application.pdb
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\bin\Debug\net8.0\ChatService.Domain.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\bin\Debug\net8.0\ChatService.Domain.pdb
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.csproj.AssemblyReference.cache
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.GeneratedMSBuildEditorConfig.editorconfig
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.AssemblyInfoInputs.cache
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.AssemblyInfo.cs
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatServ.5B4B118C.Up2Date
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\refint\ChatService.Application.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.pdb
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ref\ChatService.Application.dll

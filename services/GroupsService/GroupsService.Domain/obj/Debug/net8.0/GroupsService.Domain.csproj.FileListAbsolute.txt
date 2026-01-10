@@ -1,0 +1,11 @@
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\bin\Debug\net8.0\GroupsService.Domain.deps.json
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\bin\Debug\net8.0\GroupsService.Domain.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\bin\Debug\net8.0\GroupsService.Domain.pdb
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\GroupsService.Domain.GeneratedMSBuildEditorConfig.editorconfig
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\GroupsService.Domain.AssemblyInfoInputs.cache
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\GroupsService.Domain.AssemblyInfo.cs
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\GroupsService.Domain.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\GroupsService.Domain.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\refint\GroupsService.Domain.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\GroupsService.Domain.pdb
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\ref\GroupsService.Domain.dll

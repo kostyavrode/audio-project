@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "KFOTKo8edM/9G4M437qgfotV7vPSXy6X5CsbZkvbsKg=",
+  "Source": "AudioService.Api",
+  "BasePath": "_content/AudioService.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

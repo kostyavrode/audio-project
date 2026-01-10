@@ -1,0 +1,15 @@
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\bin\Debug\net8.0\AudioService.Application.deps.json
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\bin\Debug\net8.0\AudioService.Application.dll
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\bin\Debug\net8.0\AudioService.Application.pdb
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\bin\Debug\net8.0\AudioService.Domain.dll
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\bin\Debug\net8.0\AudioService.Domain.pdb
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.csproj.AssemblyReference.cache
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.GeneratedMSBuildEditorConfig.editorconfig
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.AssemblyInfoInputs.cache
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.AssemblyInfo.cs
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioSer.E485C09F.Up2Date
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.dll
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\refint\AudioService.Application.dll
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.pdb
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\ref\AudioService.Application.dll

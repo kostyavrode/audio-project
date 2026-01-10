@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "E0AK7TWU3mUUViePU9etBk9apdylDl6xV3zEDv2WTJw=",
+  "Source": "GroupsService.Api",
+  "BasePath": "_content/GroupsService.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

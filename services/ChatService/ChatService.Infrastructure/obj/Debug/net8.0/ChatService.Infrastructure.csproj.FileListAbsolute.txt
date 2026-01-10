@@ -1,0 +1,17 @@
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\bin\Debug\net8.0\ChatService.Infrastructure.deps.json
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\bin\Debug\net8.0\ChatService.Infrastructure.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\bin\Debug\net8.0\ChatService.Infrastructure.pdb
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\bin\Debug\net8.0\ChatService.Application.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\bin\Debug\net8.0\ChatService.Domain.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\bin\Debug\net8.0\ChatService.Domain.pdb
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\bin\Debug\net8.0\ChatService.Application.pdb
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.csproj.AssemblyReference.cache
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.AssemblyInfoInputs.cache
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.AssemblyInfo.cs
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatServ.F0B190DC.Up2Date
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\refint\ChatService.Infrastructure.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.pdb
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ref\ChatService.Infrastructure.dll

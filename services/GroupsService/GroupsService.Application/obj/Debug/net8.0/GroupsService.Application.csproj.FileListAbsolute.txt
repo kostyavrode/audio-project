@@ -1,0 +1,15 @@
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\bin\Debug\net8.0\GroupsService.Application.deps.json
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\bin\Debug\net8.0\GroupsService.Application.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\bin\Debug\net8.0\GroupsService.Application.pdb
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\bin\Debug\net8.0\GroupsService.Domain.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\bin\Debug\net8.0\GroupsService.Domain.pdb
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.csproj.AssemblyReference.cache
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.GeneratedMSBuildEditorConfig.editorconfig
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.AssemblyInfoInputs.cache
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.AssemblyInfo.cs
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsSe.15B79EB4.Up2Date
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\refint\GroupsService.Application.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.pdb
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\ref\GroupsService.Application.dll
