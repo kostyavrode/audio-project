@@ -8,6 +8,7 @@ E:\audio-kostya\audio-project\services\AuthService\AuthService.Application\obj\D
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Application\obj\Debug\net8.0\AuthService.Application.AssemblyInfoInputs.cache
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Application\obj\Debug\net8.0\AuthService.Application.AssemblyInfo.cs
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Application\obj\Debug\net8.0\AuthService.Application.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Application\obj\Debug\net8.0\AuthService.Application.sourcelink.json
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Application\obj\Debug\net8.0\AuthServ.67992DEE.Up2Date
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Application\obj\Debug\net8.0\AuthService.Application.dll
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Application\obj\Debug\net8.0\refint\AuthService.Application.dll
