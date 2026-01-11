@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 
 namespace AuthService.Infrastructure.Messaging;

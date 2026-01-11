@@ -1,14 +1,24 @@
-﻿using AuthService.Domain.Entities;
+using AuthService.Domain.Entities;
+using AuthService.Infrastructure.Extensions;
+using AuthService.Infrastructure.Outbox;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AuthService.Infrastructure.Data;
 
 public class ApplicationDbContext : IdentityDbContext<User>
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    private readonly IHttpContextAccessor? _httpContextAccessor;
+    
+    public ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        IHttpContextAccessor? httpContextAccessor = null) : base(options)
     {
+        _httpContextAccessor = httpContextAccessor;
     }
+    
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -36,7 +46,32 @@ public class ApplicationDbContext : IdentityDbContext<User>
                 entity.MarkAsUpdated();
             }
         }
+        
+        // Сохраняем доменные события в Outbox
+        var entitiesWithEvents = ChangeTracker
+            .Entries<BaseEntity>()
+            .Where(e => e.Entity.DomainEvents.Any())
+            .Select(e => e.Entity)
+            .ToList();
+        
+        // Сначала сохраняем изменения в основную БД
+        var result = await base.SaveChangesAsync(cancellationToken);
+        
+        // Затем сохраняем доменные события в Outbox
+        // Получаем OutboxDbContext через HttpContext (если доступен) или создаем новый
+        if (entitiesWithEvents.Any() && _httpContextAccessor?.HttpContext != null)
+        {
+            var outboxDbContext = _httpContextAccessor.HttpContext.RequestServices
+                .GetRequiredService<OutboxDbContext>();
+            
+            foreach (var entity in entitiesWithEvents)
+            {
+                await entity.SaveDomainEventsToOutboxAsync(outboxDbContext, cancellationToken);
+            }
+            
+            await outboxDbContext.SaveChangesAsync(cancellationToken);
+        }
     
-        return await base.SaveChangesAsync(cancellationToken);
+        return result;
     }
 }

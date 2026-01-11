@@ -1,4 +1,4 @@
-﻿using AuthService.Domain.DomainEvents;
+using AuthService.Domain.DomainEvents;
 using AuthService.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
 
@@ -13,11 +13,6 @@ public class User : BaseEntity
     public NickName NickName { get; private set; } = null!;
     
     public RefreshToken? RefreshToken { get; private set; }
-
-    private User()
-    {
-        
-    }
     
     public static User Register(string id, Email email, NickName nickName, string passwordHash)
     {

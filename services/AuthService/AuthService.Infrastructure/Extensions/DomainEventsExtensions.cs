@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using AuthService.Domain.DomainEvents;
 using AuthService.Domain.Entities;
 using AuthService.Infrastructure.Outbox;

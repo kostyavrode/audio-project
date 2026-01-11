@@ -9,7 +9,15 @@ public interface IUserRepository
     
     Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default);
     
+    Task<User?> GetByNickNameAsync(NickName nickName, CancellationToken cancellationToken = default);
+    
+    Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
+    
     Task<bool> ExistsByEmailAsync(Email email, CancellationToken cancellationToken = default);
+    
+    Task<bool> ExistsByNickNameAsync(NickName username, CancellationToken cancellationToken = default);
+    
+    
     
     Task AddAsync(User user, CancellationToken cancellationToken = default);
     

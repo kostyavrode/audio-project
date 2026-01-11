@@ -17,11 +17,13 @@ public class OutboxDbContextFactory : IDesignTimeDbContextFactory<OutboxDbContex
         // Используем строку подключения из переменных окружения или дефолтную
         // В production это будет из appsettings.json через DI
         var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-            ?? "Host=localhost;Port=5432;Database=AuthServiceDb;Username=postgres;Password=postgres;";
+            ?? "Host=localhost;Port=5432;Database=authservicedb_dev;Username=postgres;Password=postgres;";
         
         optionsBuilder.UseNpgsql(
             connectionString,
-            npgsqlOptions => npgsqlOptions.MigrationsAssembly("AuthService.Infrastructure")
+            npgsqlOptions => npgsqlOptions
+                .MigrationsAssembly("AuthService.Infrastructure")
+                .MigrationsHistoryTable("__EFMigrationsHistory", "public")
         );
         
         return new OutboxDbContext(optionsBuilder.Options);

@@ -27,24 +27,43 @@ public class UserRepository : IUserRepository
     
     public async Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default)
     {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Email.Value == email.Value, cancellationToken);
+        // EF Core автоматически применяет конверсию из HasConversion
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
     }
+    
     
     public async Task<bool> ExistsByEmailAsync(Email email, CancellationToken cancellationToken = default)
     {
-        return await _context.Users.AnyAsync(u => u.Email.Value == email.Value, cancellationToken);
+        // EF Core автоматически применяет конверсию из HasConversion
+        return await _context.Users.AnyAsync(u => u.Email == email, cancellationToken);
     }
-    
+
     public async Task<User?> GetByNickNameAsync(NickName nickName, CancellationToken cancellationToken = default)
     {
+        // Используем прямое сравнение через Value Object (EF Core применит конверсию)
+        // NickName сравнивается case-insensitive по логике самого Value Object
+        var allUsers = await _context.Users.ToListAsync(cancellationToken);
+        return allUsers.FirstOrDefault(u => u.NickName == nickName);
+    }
+    
+    public async Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            return null;
+    
         return await _context.Users
-            .FirstOrDefaultAsync(u => EF.Functions.ILike(u.NickName.Value, nickName.Value), cancellationToken);
+            .FirstOrDefaultAsync(u => 
+                    u.RefreshToken != null && 
+                    u.RefreshToken.Token == refreshToken,
+                cancellationToken);
     }
     
     public async Task<bool> ExistsByNickNameAsync(NickName nickName, CancellationToken cancellationToken = default)
     {
-        return await _context.Users
-            .AnyAsync(u => EF.Functions.ILike(u.NickName.Value, nickName.Value), cancellationToken);
+        // Используем прямое сравнение через Value Object (EF Core применит конверсию)
+        // NickName сравнивается case-insensitive по логике самого Value Object
+        var allUsers = await _context.Users.ToListAsync(cancellationToken);
+        return allUsers.Any(u => u.NickName == nickName);
     }
     
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)

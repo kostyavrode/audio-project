@@ -1,4 +1,4 @@
-﻿namespace AuthService.Infrastructure.Outbox;
+namespace AuthService.Infrastructure.Outbox;
 
 /// <summary>
 /// Статус сообщения в Outbox.

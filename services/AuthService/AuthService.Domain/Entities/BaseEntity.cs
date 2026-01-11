@@ -1,4 +1,4 @@
-﻿using AuthService.Domain.DomainEvents;
+using AuthService.Domain.DomainEvents;
 using Microsoft.AspNetCore.Identity;
 
 namespace AuthService.Domain.Entities;
