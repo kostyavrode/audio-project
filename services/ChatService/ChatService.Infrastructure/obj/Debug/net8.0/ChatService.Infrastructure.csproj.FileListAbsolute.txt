@@ -15,3 +15,6 @@ E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\ob
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\refint\ChatService.Infrastructure.dll
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.pdb
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ref\ChatService.Infrastructure.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.sourcelink.json
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\bin\Debug\net8.0\ChatService.Infrastructure.runtimeconfig.json
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Infrastructure\obj\Debug\net8.0\ChatService.Infrastructure.genruntimeconfig.cache

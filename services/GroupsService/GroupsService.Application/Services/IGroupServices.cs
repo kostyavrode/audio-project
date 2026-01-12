@@ -1,4 +1,4 @@
-﻿using GroupsService.Application.DTOs;
+using GroupsService.Application.DTOs;
 
 namespace GroupsService.Application.Services;
 

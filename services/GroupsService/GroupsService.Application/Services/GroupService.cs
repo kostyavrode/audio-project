@@ -1,4 +1,4 @@
-﻿using GroupsService.Application.DTOs;
+using GroupsService.Application.DTOs;
 using GroupsService.Domain.Entities;
 using GroupsService.Domain.Exceptions;
 using GroupsService.Domain.Interfaces;
@@ -105,6 +105,8 @@ public class GroupService : IGroupService
         {
             throw new UnauthorizedAccessException("Only group owner can delete the group");
         }
+        
+        group.MarkForDeletion();
         
         await _groupRepository.DeleteAsync(group, cancellationToken);
         await _groupRepository.SaveChangesAsync(cancellationToken);

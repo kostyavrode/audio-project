@@ -134,3 +134,4 @@ E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Api\bin\Debug
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Api\bin\Debug\net8.0\tr\Microsoft.CodeAnalysis.Workspaces.resources.dll
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Api\bin\Debug\net8.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Api\bin\Debug\net8.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Api\bin\Debug\net8.0\RabbitMQ.Client.dll

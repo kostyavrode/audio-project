@@ -1,4 +1,4 @@
-﻿using GroupsService.Domain.Entities;
+using GroupsService.Domain.Entities;
 using GroupsService.Domain.Interfaces;
 using GroupsService.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -40,14 +40,16 @@ public class GroupRepository : IGroupRepository
             .ToListAsync(cancellationToken);
     }
     
-    public async Task UpdateAsync(Group group, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(Group group, CancellationToken cancellationToken = default)
     {
         _context.Groups.Update(group);
+        return Task.CompletedTask;
     }
     
-    public async Task DeleteAsync(Group group, CancellationToken cancellationToken = default)
+    public Task DeleteAsync(Group group, CancellationToken cancellationToken = default)
     {
         _context.Groups.Remove(group);
+        return Task.CompletedTask;
     }
     
     public async Task<(IEnumerable<Group> Groups, int TotalCount)> SearchAsync(string? query, int page, int pageSize, CancellationToken cancellationToken = default)

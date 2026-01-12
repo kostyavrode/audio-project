@@ -1,4 +1,4 @@
-﻿using GroupsService.Domain.Entities;
+using GroupsService.Domain.Entities;
 
 namespace GroupsService.Domain.Interfaces;
 

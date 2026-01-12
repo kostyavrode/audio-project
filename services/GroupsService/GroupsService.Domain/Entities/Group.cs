@@ -1,4 +1,5 @@
-﻿using GroupsService.Domain.Exceptions;
+using GroupsService.Domain.DomainEvents;
+using GroupsService.Domain.Exceptions;
 using GroupsService.Domain.ValueObjects;
 
 namespace GroupsService.Domain.Entities;
@@ -65,6 +66,8 @@ public class Group : BaseEntity
         );
         group._members.Add(ownerMember);
         
+        group.AddDomainEvent(new GroupCreatedEvent(group.Id, group.Name, group.OwnerId, group.CreatedAt));
+        
         return group;
     }
     
@@ -85,6 +88,8 @@ public class Group : BaseEntity
         
         _members.Add(member);
         MarkAsUpdated();
+        
+        AddDomainEvent(new UserJoinedGroupEvent(Id, userId, role.ToString(), DateTime.UtcNow));
     }
     
     public void UpdateName(string name)
@@ -129,5 +134,12 @@ public class Group : BaseEntity
         
         _members.Remove(member);
         MarkAsUpdated();
+        
+        AddDomainEvent(new UserLeftGroupEvent(Id, userId, DateTime.UtcNow));
+    }
+    
+    public void MarkForDeletion()
+    {
+        AddDomainEvent(new GroupDeletedEvent(Id, DateTime.UtcNow));
     }
 }

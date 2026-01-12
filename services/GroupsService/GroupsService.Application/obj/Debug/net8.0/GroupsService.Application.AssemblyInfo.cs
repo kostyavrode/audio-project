@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GroupsService.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+63f56758f55e1eef541ab083d6341245ce67bb7b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2dbbe34c19c17966f37e632817ef47f9e0eeaeb1")]
 [assembly: System.Reflection.AssemblyProductAttribute("GroupsService.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GroupsService.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

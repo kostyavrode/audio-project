@@ -13,3 +13,4 @@ E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\D
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\refint\ChatService.Application.dll
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.pdb
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ref\ChatService.Application.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Application\obj\Debug\net8.0\ChatService.Application.sourcelink.json

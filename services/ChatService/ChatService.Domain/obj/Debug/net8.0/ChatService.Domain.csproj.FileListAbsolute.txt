@@ -9,3 +9,4 @@ E:\audio-kostya\audio-project\services\ChatService\ChatService.Domain\obj\Debug\
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Domain\obj\Debug\net8.0\refint\ChatService.Domain.dll
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Domain\obj\Debug\net8.0\ChatService.Domain.pdb
 E:\audio-kostya\audio-project\services\ChatService\ChatService.Domain\obj\Debug\net8.0\ref\ChatService.Domain.dll
+E:\audio-kostya\audio-project\services\ChatService\ChatService.Domain\obj\Debug\net8.0\ChatService.Domain.sourcelink.json

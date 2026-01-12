@@ -12,12 +12,20 @@ using Microsoft.AspNetCore.Identity;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using GroupsService.Api.Middleware;
+using GroupsService.Infrastructure.Messaging;
+using GroupsService.Infrastructure.Outbox;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<GroupsDbContext>(options =>
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddDbContext<GroupsDbContext>((serviceProvider, options) =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+builder.Services.AddDbContext<OutboxDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -68,6 +76,13 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+
+builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection(RabbitMQSettings.SectionName));
+builder.Services.AddSingleton<RabbitMQConnectionFactory>();
+builder.Services.AddScoped<IRabbitMQPublisher, RabbitMQPublisher>();
+
+builder.Services.Configure<OutboxPublisherSettings>(builder.Configuration.GetSection(OutboxPublisherSettings.SectionName));
+builder.Services.AddHostedService<OutboxPublisher>();
 
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 
@@ -124,9 +139,11 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<GroupsDbContext>();
+    var outboxDbContext = scope.ServiceProvider.GetRequiredService<OutboxDbContext>();
     try
     {
         dbContext.Database.Migrate();
+        outboxDbContext.Database.Migrate();
     }
     catch (Exception ex)
     {
