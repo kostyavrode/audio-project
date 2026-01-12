@@ -34,6 +34,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             {
                 janus = "message",
                 plugin = "janus.plugin.audiobridge",
+                transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
                     request = "create",
@@ -44,14 +45,17 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             };
 
             var response = await _httpClient.PostAsJsonAsync(
-                $"/{sessionId}/{handleId}",
+                $"/janus/{sessionId}/{handleId}",
                 request,
                 cancellationToken
             );
 
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation("Janus create room response: {Response}", responseContent);
+
+            var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
 
             if (result.TryGetProperty("plugindata", out var pluginData) &&
                 pluginData.TryGetProperty("data", out var data) &&
@@ -64,7 +68,8 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 }
             }
 
-            throw new InvalidOperationException("Failed to parse room ID from Janus response");
+            _logger.LogError("Failed to parse room ID from Janus response. Response structure: {Response}", responseContent);
+            throw new InvalidOperationException($"Failed to parse room ID from Janus response. Response: {responseContent}");
         }
         catch (Exception ex)
         {
@@ -84,6 +89,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             {
                 janus = "message",
                 plugin = "janus.plugin.audiobridge",
+                transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
                     request = "destroy",
@@ -93,7 +99,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             };
 
             var response = await _httpClient.PostAsJsonAsync(
-                $"/{sessionId}/{handleId}",
+                $"/janus/{sessionId}/{handleId}",
                 request,
                 cancellationToken
             );
@@ -120,6 +126,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             {
                 janus = "message",
                 plugin = "janus.plugin.audiobridge",
+                transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
                     request = "listparticipants",
@@ -128,7 +135,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             };
 
             var response = await _httpClient.PostAsJsonAsync(
-                $"/{sessionId}/{handleId}",
+                $"/janus/{sessionId}/{handleId}",
                 request,
                 cancellationToken
             );
@@ -168,7 +175,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             transaction = Guid.NewGuid().ToString()
         };
 
-        var response = await _httpClient.PostAsJsonAsync("/", request, cancellationToken);
+        var response = await _httpClient.PostAsJsonAsync("/janus", request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
@@ -192,7 +199,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             transaction = Guid.NewGuid().ToString()
         };
 
-        var response = await _httpClient.PostAsJsonAsync($"/{sessionId}", request, cancellationToken);
+        var response = await _httpClient.PostAsJsonAsync($"/janus/{sessionId}", request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
