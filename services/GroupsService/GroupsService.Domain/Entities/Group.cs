@@ -67,6 +67,7 @@ public class Group : BaseEntity
         group._members.Add(ownerMember);
         
         group.AddDomainEvent(new GroupCreatedEvent(group.Id, group.Name, group.OwnerId, group.CreatedAt));
+        group.AddDomainEvent(new UserJoinedGroupEvent(group.Id, ownerId, GroupMemberRole.Owner.ToString(), group.CreatedAt));
         
         return group;
     }

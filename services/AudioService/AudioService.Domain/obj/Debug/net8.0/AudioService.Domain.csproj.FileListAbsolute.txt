@@ -5,6 +5,7 @@ E:\audio-kostya\audio-project\services\AudioService\AudioService.Domain\obj\Debu
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Domain\obj\Debug\net8.0\AudioService.Domain.AssemblyInfoInputs.cache
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Domain\obj\Debug\net8.0\AudioService.Domain.AssemblyInfo.cs
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Domain\obj\Debug\net8.0\AudioService.Domain.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Domain\obj\Debug\net8.0\AudioService.Domain.sourcelink.json
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Domain\obj\Debug\net8.0\AudioService.Domain.dll
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Domain\obj\Debug\net8.0\refint\AudioService.Domain.dll
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Domain\obj\Debug\net8.0\AudioService.Domain.pdb

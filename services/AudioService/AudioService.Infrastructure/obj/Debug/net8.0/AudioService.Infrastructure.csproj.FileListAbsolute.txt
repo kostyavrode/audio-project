@@ -1,4 +1,5 @@
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\bin\Debug\net8.0\AudioService.Infrastructure.deps.json
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\bin\Debug\net8.0\AudioService.Infrastructure.runtimeconfig.json
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\bin\Debug\net8.0\AudioService.Infrastructure.dll
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\bin\Debug\net8.0\AudioService.Infrastructure.pdb
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\bin\Debug\net8.0\AudioService.Application.dll
@@ -10,8 +11,10 @@ E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\AudioService.Infrastructure.AssemblyInfoInputs.cache
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\AudioService.Infrastructure.AssemblyInfo.cs
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\AudioService.Infrastructure.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\AudioService.Infrastructure.sourcelink.json
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\AudioSer.CBF6FE98.Up2Date
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\AudioService.Infrastructure.dll
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\refint\AudioService.Infrastructure.dll
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\AudioService.Infrastructure.pdb
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\AudioService.Infrastructure.genruntimeconfig.cache
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Infrastructure\obj\Debug\net8.0\ref\AudioService.Infrastructure.dll
