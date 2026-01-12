@@ -15,3 +15,6 @@ E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Infrastructur
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Infrastructure\obj\Debug\net8.0\refint\GroupsService.Infrastructure.dll
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Infrastructure\obj\Debug\net8.0\GroupsService.Infrastructure.pdb
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Infrastructure\obj\Debug\net8.0\ref\GroupsService.Infrastructure.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Infrastructure\bin\Debug\net8.0\GroupsService.Infrastructure.runtimeconfig.json
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Infrastructure\obj\Debug\net8.0\GroupsService.Infrastructure.sourcelink.json
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Infrastructure\obj\Debug\net8.0\GroupsService.Infrastructure.genruntimeconfig.cache

@@ -9,3 +9,4 @@ E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\De
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\refint\GroupsService.Domain.dll
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\GroupsService.Domain.pdb
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\ref\GroupsService.Domain.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Domain\obj\Debug\net8.0\GroupsService.Domain.sourcelink.json

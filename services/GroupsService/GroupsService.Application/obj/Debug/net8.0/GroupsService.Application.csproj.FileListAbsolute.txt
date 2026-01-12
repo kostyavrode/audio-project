@@ -13,3 +13,4 @@ E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\o
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\refint\GroupsService.Application.dll
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.pdb
 E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\ref\GroupsService.Application.dll
+E:\audio-kostya\audio-project\services\GroupsService\GroupsService.Application\obj\Debug\net8.0\GroupsService.Application.sourcelink.json
