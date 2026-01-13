@@ -207,6 +207,67 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
         }
     }
 
+    public async Task<List<JanusParticipant>> GetRoomParticipantsAsync(long roomId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var sessionId = await CreateSessionAsync(cancellationToken);
+            var handleId = await AttachPluginAsync(sessionId, cancellationToken);
+
+            var request = new
+            {
+                janus = "message",
+                plugin = "janus.plugin.audiobridge",
+                transaction = Guid.NewGuid().ToString(),
+                body = new
+                {
+                    request = "listparticipants",
+                    room = roomId
+                }
+            };
+
+            var response = await _httpClient.PostAsJsonAsync(
+                $"/janus/{sessionId}/{handleId}",
+                request,
+                cancellationToken
+            );
+
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
+
+            var participants = new List<JanusParticipant>();
+
+            if (result.TryGetProperty("plugindata", out var pluginData) &&
+                pluginData.TryGetProperty("data", out var data))
+            {
+                if (data.TryGetProperty("error_code", out _))
+                {
+                    return participants;
+                }
+
+                if (data.TryGetProperty("participants", out var participantsElement))
+                {
+                    foreach (var p in participantsElement.EnumerateArray())
+                    {
+                        participants.Add(new JanusParticipant
+                        {
+                            Id = p.TryGetProperty("id", out var id) ? id.GetInt64() : 0,
+                            Display = p.TryGetProperty("display", out var display) ? display.GetString() ?? "" : "",
+                            Muted = p.TryGetProperty("muted", out var muted) && muted.GetBoolean()
+                        });
+                    }
+                }
+            }
+
+            return participants;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get participants for room {RoomId}", roomId);
+            return new List<JanusParticipant>();
+        }
+    }
+
     private async Task<long> CreateSessionAsync(CancellationToken cancellationToken)
     {
         var request = new

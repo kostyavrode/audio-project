@@ -215,4 +215,21 @@ public class AudioChannelsController : ControllerBase
             return StatusCode(500, new { error = "Failed to recreate Janus room" });
         }
     }
+
+    [HttpGet("{id}/participants")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> GetChannelParticipants(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var participants = await _audioChannelService.GetChannelParticipantsAsync(id, cancellationToken);
+            return Ok(participants);
+        }
+        catch (AudioChannelNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
 }

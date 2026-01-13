@@ -249,6 +249,26 @@ public class AudioChannelService : IAudioChannelService
         }
     }
 
+    public async Task<IEnumerable<AudioParticipantDto>> GetChannelParticipantsAsync(string channelId, CancellationToken cancellationToken = default)
+    {
+        var channel = await _channelRepository.GetByIdAsync(channelId, cancellationToken);
+
+        if (channel == null)
+            throw new AudioChannelNotFoundException(channelId);
+
+        if (!channel.JanusRoomId.HasValue)
+            return Enumerable.Empty<AudioParticipantDto>();
+
+        var participants = await _janusGatewayClient.GetRoomParticipantsAsync(channel.JanusRoomId.Value, cancellationToken);
+
+        return participants.Select(p => new AudioParticipantDto
+        {
+            Id = p.Id,
+            DisplayName = p.Display,
+            IsMuted = p.Muted
+        });
+    }
+
     private static AudioChannelDto MapToAudioChannelDto(AudioChannel channel)
     {
         return new AudioChannelDto
