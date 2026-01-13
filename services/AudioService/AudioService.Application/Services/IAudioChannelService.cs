@@ -9,4 +9,5 @@ public interface IAudioChannelService
     Task<IEnumerable<AudioChannelDto>> GetChannelsByGroupIdAsync(string groupId, CancellationToken cancellationToken = default);
     Task<AudioChannelDto> UpdateAudioChannelAsync(string channelId, UpdateAudioChannelDto updateDto, string userId, CancellationToken cancellationToken = default);
     Task DeleteAudioChannelAsync(string channelId, string userId, CancellationToken cancellationToken = default);
+    Task<bool> RecreateJanusRoomAsync(string channelId, string userId, CancellationToken cancellationToken = default);
 }

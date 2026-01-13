@@ -67,12 +67,73 @@ public class AudioChannelService : IAudioChannelService
             return null;
         }
 
+        // Если у канала есть JanusRoomId, проверяем существование комнаты
+        if (channel.JanusRoomId.HasValue)
+        {
+            try
+            {
+                var roomInfo = await _janusGatewayClient.GetRoomInfoAsync(channel.JanusRoomId.Value, cancellationToken);
+                if (roomInfo == null)
+                {
+                    // Комната не существует, пытаемся пересоздать
+                    _logger.LogWarning("Janus room {RoomId} for channel {ChannelId} does not exist, attempting to recreate", channel.JanusRoomId.Value, channelId);
+                    try
+                    {
+                        await _janusGatewayClient.CreateRoomAsync(channel.JanusRoomId.Value, channel.Name, cancellationToken);
+                        _logger.LogInformation("Successfully recreated Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to recreate Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
+                        // Не выбрасываем исключение, просто логируем
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not verify Janus room {RoomId} for channel {ChannelId}, assuming it exists", channel.JanusRoomId.Value, channelId);
+                // Не выбрасываем исключение, возможно комната существует, но временно недоступна
+            }
+        }
+
         return MapToAudioChannelDto(channel);
     }
 
     public async Task<IEnumerable<AudioChannelDto>> GetChannelsByGroupIdAsync(string groupId, CancellationToken cancellationToken = default)
     {
         var channels = await _channelRepository.GetByGroupIdAsync(groupId, cancellationToken);
+
+        // Проверяем и пересоздаем комнаты, если они не существуют
+        foreach (var channel in channels)
+        {
+            if (channel.JanusRoomId.HasValue)
+            {
+                try
+                {
+                    var roomInfo = await _janusGatewayClient.GetRoomInfoAsync(channel.JanusRoomId.Value, cancellationToken);
+                    if (roomInfo == null)
+                    {
+                        // Комната не существует, пытаемся пересоздать
+                        _logger.LogWarning("Janus room {RoomId} for channel {ChannelId} does not exist, attempting to recreate", channel.JanusRoomId.Value, channel.Id);
+                        try
+                        {
+                            await _janusGatewayClient.CreateRoomAsync(channel.JanusRoomId.Value, channel.Name, cancellationToken);
+                            _logger.LogInformation("Successfully recreated Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channel.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to recreate Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channel.Id);
+                            // Не выбрасываем исключение, просто логируем
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not verify Janus room {RoomId} for channel {ChannelId}, assuming it exists", channel.JanusRoomId.Value, channel.Id);
+                    // Не выбрасываем исключение, возможно комната существует, но временно недоступна
+                }
+            }
+        }
 
         return channels.Select(MapToAudioChannelDto);
     }
@@ -146,6 +207,53 @@ public class AudioChannelService : IAudioChannelService
     {
         var hash = channelId.GetHashCode();
         return Math.Abs((long)hash);
+    }
+
+    public async Task<bool> RecreateJanusRoomAsync(string channelId, string userId, CancellationToken cancellationToken = default)
+    {
+        var channel = await _channelRepository.GetByIdAsync(channelId, cancellationToken);
+
+        if (channel == null)
+        {
+            throw new AudioChannelNotFoundException(channelId);
+        }
+
+        var isOwner = await _groupAccessChecker.IsGroupOwnerAsync(channel.GroupId, userId, cancellationToken);
+
+        if (!isOwner)
+        {
+            throw new UnauthorizedAccessException("Only group owner can recreate Janus room");
+        }
+
+        if (!channel.JanusRoomId.HasValue)
+        {
+            throw new InvalidOperationException($"Channel {channelId} does not have a Janus room ID");
+        }
+
+        try
+        {
+            // Пытаемся удалить старую комнату, если она существует
+            try
+            {
+                await _janusGatewayClient.DeleteRoomAsync(channel.JanusRoomId.Value, cancellationToken);
+                _logger.LogInformation("Deleted existing Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not delete Janus room {RoomId} for channel {ChannelId}, it may not exist", channel.JanusRoomId.Value, channelId);
+            }
+
+            // Создаем новую комнату
+            await _janusGatewayClient.CreateRoomAsync(channel.JanusRoomId.Value, channel.Name, cancellationToken);
+            _logger.LogInformation("Successfully recreated Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to recreate Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
+            throw;
+        }
     }
 
     private static AudioChannelDto MapToAudioChannelDto(AudioChannel channel)

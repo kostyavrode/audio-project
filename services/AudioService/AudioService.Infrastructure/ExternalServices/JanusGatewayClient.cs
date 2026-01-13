@@ -141,25 +141,64 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 cancellationToken
             );
 
-            response.EnsureSuccessStatusCode();
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
 
-            var result = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-
+            // Проверяем наличие ошибки "No such room"
             if (result.TryGetProperty("plugindata", out var pluginData) &&
-                pluginData.TryGetProperty("data", out var data) &&
-                data.TryGetProperty("participants", out var participantsElement))
+                pluginData.TryGetProperty("data", out var data))
             {
-                var participants = participantsElement.EnumerateArray().ToList();
+                // Проверяем наличие ошибки
+                if (data.TryGetProperty("error_code", out var errorCode) &&
+                    data.TryGetProperty("error", out var error))
+                {
+                    var errorCodeValue = errorCode.GetInt32();
+                    var errorMessage = error.GetString();
+                    
+                    if (errorCodeValue == 485 && errorMessage?.Contains("No such room") == true)
+                    {
+                        _logger.LogWarning("Janus room {RoomId} does not exist", roomId);
+                        return null; // Комната не существует
+                    }
+                    
+                    // Другие ошибки - выбрасываем исключение
+                    _logger.LogError("Janus error for room {RoomId}: {ErrorCode} - {ErrorMessage}", roomId, errorCodeValue, errorMessage);
+                    throw new InvalidOperationException($"Janus error: {errorMessage}");
+                }
 
+                // Если нет ошибки, проверяем наличие participants
+                if (data.TryGetProperty("participants", out var participantsElement))
+                {
+                    var participants = participantsElement.EnumerateArray().ToList();
+
+                    return new JanusRoomInfo
+                    {
+                        RoomId = roomId,
+                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
+                        ParticipantsCount = participants.Count
+                    };
+                }
+            }
+
+            // Если структура ответа неожиданная, но статус успешный - считаем что комната существует
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Unexpected Janus response structure for room {RoomId}, assuming room exists", roomId);
                 return new JanusRoomInfo
                 {
                     RoomId = roomId,
-                    Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
-                    ParticipantsCount = participants.Count
+                    Description = string.Empty,
+                    ParticipantsCount = 0
                 };
             }
 
+            response.EnsureSuccessStatusCode();
             return null;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "Failed to connect to Janus for room {RoomId}, assuming room does not exist", roomId);
+            return null; // Если не можем подключиться, считаем что комната не существует
         }
         catch (Exception ex)
         {

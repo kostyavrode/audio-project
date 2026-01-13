@@ -167,4 +167,52 @@ public class AudioChannelsController : ControllerBase
             return Unauthorized(new { error = ex.Message });
         }
     }
+
+    [HttpPost("{id}/recreate-room")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RecreateJanusRoom(string id, CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            userIdClaim = User.FindFirstValue("sub");
+        }
+
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            return Unauthorized(new { error = "User ID not found in token" });
+        }
+
+        try
+        {
+            var success = await _audioChannelService.RecreateJanusRoomAsync(id, userIdClaim, cancellationToken);
+
+            _logger.LogInformation("Janus room recreated for channel {ChannelId} by user {UserId}", id, userIdClaim);
+
+            return Ok(new { success = true, message = "Janus room recreated successfully" });
+        }
+        catch (AudioChannelNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Audio channel not found: {ChannelId}", id);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized recreate room attempt: Channel {ChannelId} by user {UserId}", id, userIdClaim);
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation for channel {ChannelId}", id);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to recreate Janus room for channel {ChannelId}", id);
+            return StatusCode(500, new { error = "Failed to recreate Janus room" });
+        }
+    }
 }
