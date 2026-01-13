@@ -22,7 +22,7 @@ public class Group : BaseEntity
     {
     }
 
-    public static Group Create(string id,string name, string? description, string? passwordHash, string ownerId)
+    public static Group Create(string id, string name, string? description, string? passwordHash, string ownerId, string ownerNickName)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -62,6 +62,7 @@ public class Group : BaseEntity
             Guid.NewGuid().ToString(),
             id,
             ownerId,
+            ownerNickName ?? "Owner",
             GroupMemberRole.Owner
         );
         group._members.Add(ownerMember);
@@ -72,7 +73,7 @@ public class Group : BaseEntity
         return group;
     }
     
-    public void AddMember(string userId, GroupMemberRole role = GroupMemberRole.Member)
+    public void AddMember(string userId, string nickName, GroupMemberRole role = GroupMemberRole.Member)
     {
         if (string.IsNullOrWhiteSpace(userId))
             throw new DomainException("User ID cannot be empty");
@@ -84,6 +85,7 @@ public class Group : BaseEntity
             Guid.NewGuid().ToString(),
             Id,
             userId,
+            nickName ?? "Member",
             role
         );
         

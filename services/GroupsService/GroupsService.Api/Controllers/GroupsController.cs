@@ -41,9 +41,14 @@ public class GroupsController : ControllerBase
             return Unauthorized(new { error = "User ID not found in token" });
         }
         
+        var nickName = User.FindFirstValue("nickname") 
+            ?? User.FindFirstValue(ClaimTypes.Name) 
+            ?? User.FindFirstValue("name")
+            ?? "Unknown";
+        
         try
         {
-            var groupDto = await _groupService.CreateGroupAsync(createGroupDto, userIdClaim, cancellationToken);
+            var groupDto = await _groupService.CreateGroupAsync(createGroupDto, userIdClaim, nickName, cancellationToken);
             
             _logger.LogInformation("Group created: {GroupId} by user {UserId}", groupDto.Id, userIdClaim);
             
@@ -239,9 +244,14 @@ public class GroupsController : ControllerBase
             return Unauthorized(new { error = "User ID not found in token" });
         }
         
+        var nickName = User.FindFirstValue("nickname") 
+            ?? User.FindFirstValue(ClaimTypes.Name) 
+            ?? User.FindFirstValue("name")
+            ?? "Unknown";
+        
         try
         {
-            await _groupService.JoinGroupAsync(id, joinGroupDto, userIdClaim, cancellationToken);
+            await _groupService.JoinGroupAsync(id, joinGroupDto, userIdClaim, nickName, cancellationToken);
             
             _logger.LogInformation("User {UserId} joined group {GroupId}", userIdClaim, id);
             

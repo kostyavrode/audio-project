@@ -21,7 +21,7 @@ public class GroupService : IGroupService
         _logger = logger;
     }
     
-    public async Task<GroupDto> CreateGroupAsync(CreateGroupDto createGroupDto, string userId, CancellationToken cancellationToken = default)
+    public async Task<GroupDto> CreateGroupAsync(CreateGroupDto createGroupDto, string userId, string nickName, CancellationToken cancellationToken = default)
     {
         var groupId = Guid.NewGuid().ToString();
         
@@ -33,7 +33,7 @@ public class GroupService : IGroupService
             passwordHash = _hasher.HashPassword(tempGroup, createGroupDto.Password);
         }
         
-        var group = Group.Create(groupId, createGroupDto.Name,createGroupDto.Description, passwordHash, userId);
+        var group = Group.Create(groupId, createGroupDto.Name, createGroupDto.Description, passwordHash, userId, nickName);
         
         await _groupRepository.AddAsync(group, cancellationToken);
         await _groupRepository.SaveChangesAsync(cancellationToken);
@@ -131,7 +131,7 @@ public class GroupService : IGroupService
         };
     }
     
-    public async Task JoinGroupAsync(string groupId, JoinGroupDto joinGroupDto, string userId, CancellationToken cancellationToken = default)
+    public async Task JoinGroupAsync(string groupId, JoinGroupDto joinGroupDto, string userId, string nickName, CancellationToken cancellationToken = default)
     {
         var group = await _groupRepository.GetByIdAsync(groupId, cancellationToken);
         
@@ -163,7 +163,7 @@ public class GroupService : IGroupService
             }
         }
         
-        group.AddMember(userId, GroupMemberRole.Member);
+        group.AddMember(userId, nickName, GroupMemberRole.Member);
         
         await _groupRepository.UpdateAsync(group, cancellationToken);
         await _groupRepository.SaveChangesAsync(cancellationToken);
@@ -218,6 +218,7 @@ public class GroupService : IGroupService
             Id = m.Id,
             GroupId = m.GroupId,
             UserId = m.UserId,
+            NickName = m.NickName,
             Role = m.Role.ToString(),
             JoinedAt = m.CreatedAt
         });

@@ -30,4 +30,10 @@ public class GroupAccessChecker : IGroupAccessChecker
 
         return false;
     }
+
+    public async Task<bool> IsGroupMemberAsync(string groupId, string userId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.GroupMembers
+            .AnyAsync(m => m.GroupId == groupId && m.UserId == userId, cancellationToken);
+    }
 }

@@ -214,38 +214,31 @@ public class AudioChannelService : IAudioChannelService
         var channel = await _channelRepository.GetByIdAsync(channelId, cancellationToken);
 
         if (channel == null)
-        {
             throw new AudioChannelNotFoundException(channelId);
-        }
 
-        var isOwner = await _groupAccessChecker.IsGroupOwnerAsync(channel.GroupId, userId, cancellationToken);
+        var isMember = await _groupAccessChecker.IsGroupMemberAsync(channel.GroupId, userId, cancellationToken);
 
-        if (!isOwner)
-        {
-            throw new UnauthorizedAccessException("Only group owner can recreate Janus room");
-        }
+        if (!isMember)
+            throw new UnauthorizedAccessException("Only group members can recreate Janus room");
 
         if (!channel.JanusRoomId.HasValue)
         {
-            throw new InvalidOperationException($"Channel {channelId} does not have a Janus room ID");
+            var janusRoomId = GetJanusRoomId(channelId);
+            channel.SetJanusRoomId(janusRoomId);
+            await _channelRepository.UpdateAsync(channel, cancellationToken);
+            await _channelRepository.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Generated JanusRoomId {RoomId} for channel {ChannelId}", janusRoomId, channelId);
         }
 
         try
         {
-            // Пытаемся удалить старую комнату, если она существует
             try
             {
                 await _janusGatewayClient.DeleteRoomAsync(channel.JanusRoomId.Value, cancellationToken);
-                _logger.LogInformation("Deleted existing Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Could not delete Janus room {RoomId} for channel {ChannelId}, it may not exist", channel.JanusRoomId.Value, channelId);
-            }
+            catch { }
 
-            // Создаем новую комнату
             await _janusGatewayClient.CreateRoomAsync(channel.JanusRoomId.Value, channel.Name, cancellationToken);
-            _logger.LogInformation("Successfully recreated Janus room {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
 
             return true;
         }
