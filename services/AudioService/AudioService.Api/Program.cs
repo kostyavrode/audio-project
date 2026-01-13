@@ -113,6 +113,14 @@ builder.Services.AddScoped<IJanusGatewayClient>(serviceProvider =>
 });
 builder.Services.Configure<JanusGatewaySettings>(builder.Configuration.GetSection(JanusGatewaySettings.SectionName));
 
+// Логирование настроек Janus Gateway для диагностики
+var janusSettings = builder.Configuration.GetSection(JanusGatewaySettings.SectionName).Get<JanusGatewaySettings>();
+if (janusSettings != null)
+{
+    var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger<Program>();
+    logger.LogInformation("JanusGateway BaseUrl configured: {BaseUrl}", janusSettings.BaseUrl);
+}
+
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateAudioChannelDtoValidator>();

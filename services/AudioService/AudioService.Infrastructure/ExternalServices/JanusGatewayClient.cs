@@ -21,6 +21,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
         _settings = settings.Value;
         _logger = logger;
         _httpClient.BaseAddress = new Uri(_settings.BaseUrl);
+        _logger.LogInformation("JanusGatewayClient initialized with BaseUrl: {BaseUrl}", _settings.BaseUrl);
     }
 
     public async Task<long> CreateRoomAsync(long roomId, string description, CancellationToken cancellationToken = default)
