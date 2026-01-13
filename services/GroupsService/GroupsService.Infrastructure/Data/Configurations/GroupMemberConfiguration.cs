@@ -24,6 +24,11 @@ public class GroupMemberConfiguration : IEntityTypeConfiguration<GroupMember>
             .IsRequired()
             .HasMaxLength(50);
         
+        builder.Property(m => m.NickName)
+            .IsRequired()
+            .HasMaxLength(100)
+            .HasDefaultValue("Unknown");
+        
         builder.Property(m => m.Role)
             .IsRequired()
             .HasConversion<int>();

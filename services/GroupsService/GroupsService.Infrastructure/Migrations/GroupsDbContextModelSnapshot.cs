@@ -73,6 +73,13 @@ namespace GroupsService.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("NickName")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("Unknown");
+
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 

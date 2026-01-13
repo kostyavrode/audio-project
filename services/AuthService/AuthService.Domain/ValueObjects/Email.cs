@@ -4,24 +4,26 @@ namespace AuthService.Domain.ValueObjects;
 
 public class Email : IEquatable<Email>
 {
-    public string Value { get; private set; }
+    public string? Value { get; private set; }
+    
+    public bool HasValue => !string.IsNullOrEmpty(Value);
 
-    private Email(string value)
+    private Email(string? value)
     {
         Value = value;
     }
     
-    public static implicit operator string(Email email) => email.Value;
+    public static Email Empty => new Email(null);
     
-    public static explicit operator Email(string email) => Create(email);
+    public static implicit operator string?(Email? email) => email?.Value;
 
-    public override string ToString() => Value;
+    public override string ToString() => Value ?? string.Empty;
     
-    public static Email Create(string email)
+    public static Email Create(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
         {
-            throw new ArgumentException("Email cannot be null or whitespace.", nameof(email));
+            return Empty;
         }
         
         var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -41,15 +43,8 @@ public class Email : IEquatable<Email>
     
     public bool Equals(Email? other)
     {
-        if (other is null)
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(this, other))
-        {
-            return true;
-        }
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
         return Value == other.Value;
     }
     
@@ -60,7 +55,7 @@ public class Email : IEquatable<Email>
     
     public override int GetHashCode()
     {
-        return Value.GetHashCode();
+        return Value?.GetHashCode() ?? 0;
     }
     
     public static bool operator ==(Email? left, Email? right)

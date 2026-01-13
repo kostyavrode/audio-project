@@ -38,7 +38,6 @@ namespace AuthService.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
 
@@ -92,7 +91,8 @@ namespace AuthService.Infrastructure.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique()
-                        .HasDatabaseName("IX_Users_Email");
+                        .HasDatabaseName("IX_Users_Email")
+                        .HasFilter("\"Email\" IS NOT NULL");
 
                     b.HasIndex("NickName")
                         .IsUnique()

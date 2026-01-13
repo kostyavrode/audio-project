@@ -14,9 +14,9 @@ public class UserRegisteredEvent : IDomainEvent
     
     public NickName NickName { get; }
     
-    public Email Email { get; }
+    public Email? Email { get; }
     
-    public UserRegisteredEvent(string userId, Email email, NickName nickName, DateTime registeredAt)
+    public UserRegisteredEvent(string userId, Email? email, NickName nickName, DateTime registeredAt)
     {
         EventId = Guid.NewGuid();
         OccurredAt = DateTime.UtcNow;

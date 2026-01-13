@@ -14,18 +14,17 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         // Настройка Id (наследуется от IdentityUser, но можно переопределить)
         builder.HasKey(u => u.Id);
         
-        // Email - Value Object
-        // Преобразуем Email Value Object в string для хранения в БД
         builder.Property(u => u.Email)
             .HasConversion(
-                v => v.Value,
-                v => Email.Create(v)
+                v => v == null ? null : v.Value,
+                v => v == null ? Email.Empty : Email.Create(v)
             )
             .HasMaxLength(254)
-            .IsRequired();
+            .IsRequired(false);
         
         builder.HasIndex(u => u.Email)
             .IsUnique()
+            .HasFilter("\"Email\" IS NOT NULL")
             .HasDatabaseName("IX_Users_Email");
         
         // NickName - Value Object

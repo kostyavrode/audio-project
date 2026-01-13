@@ -7,13 +7,14 @@ public class GroupMember : BaseEntity
 {
     public string GroupId { get; private set; } = string.Empty;
     public string UserId { get; private set; } = string.Empty;
+    public string NickName { get; private set; } = string.Empty;
     public GroupMemberRole Role { get; private set; }
     
     public Group? Group { get; private set; }
     
     private GroupMember() { }
     
-    public static GroupMember Create(string id, string groupId, string userId, GroupMemberRole role)
+    public static GroupMember Create(string id, string groupId, string userId, string nickName, GroupMemberRole role)
     {
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -35,8 +36,14 @@ public class GroupMember : BaseEntity
             Id = id,
             GroupId = groupId,
             UserId = userId,
+            NickName = nickName ?? "Unknown",
             Role = role,
             CreatedAt = DateTime.UtcNow
         };
+    }
+    
+    public void UpdateNickName(string nickName)
+    {
+        NickName = nickName ?? "Unknown";
     }
 }

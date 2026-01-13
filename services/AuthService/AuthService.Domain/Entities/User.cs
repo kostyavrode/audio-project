@@ -6,7 +6,7 @@ namespace AuthService.Domain.Entities;
 
 public class User : BaseEntity
 {
-    public Email Email { get; private set; }
+    public Email? Email { get; private set; }
     
     public string PasswordHash { get; private set; } = string.Empty;
     
@@ -14,7 +14,7 @@ public class User : BaseEntity
     
     public RefreshToken? RefreshToken { get; private set; }
     
-    public static User Register(string id, Email email, NickName nickName, string passwordHash)
+    public static User Register(string id, Email? email, NickName nickName, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(id))
         {

@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: audio-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - audio-network
+
+  janus:
+    image: canyan/janus-gateway
+    container_name: audio-janus
+    ports:
+      - "8088:8088"
+      - "8188:8188"
+      - "10000-10100:10000-10100/udp"
+    restart: unless-stopped
+    networks:
+      - audio-network
+
+  auth-service:
+    build:
+      context: ./services/AuthService
+      dockerfile: AuthService.Api/Dockerfile
+    container_name: audio-auth-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=${AUTH_DB_CONNECTION}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - CookieSettings__Secure=true
+      - CookieSettings__SameSite=None
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - audio-network
+
+  groups-service:
+    build:
+      context: ./services/GroupsService
+      dockerfile: GroupsService.Api/Dockerfile
+    container_name: audio-groups-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=${GROUPS_DB_CONNECTION}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - audio-network
+
+  chat-service:
+    build:
+      context: ./services/ChatService
+      dockerfile: ChatService.Api/Dockerfile
+    container_name: audio-chat-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=${CHAT_DB_CONNECTION}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - audio-network
+
+  audio-service:
+    build:
+      context: ./services/AudioService
+      dockerfile: AudioService.Api/Dockerfile
+    container_name: audio-audio-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=${AUDIO_DB_CONNECTION}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - JanusGateway__BaseUrl=http://janus:8088
+      - JanusGateway__ApiSecret=${JANUS_API_SECRET}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      janus:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - audio-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: audio-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ../site:/var/www/html:ro
+    depends_on:
+      - auth-service
+      - groups-service
+      - chat-service
+      - audio-service
+    restart: unless-stopped
+    networks:
+      - audio-network
+
+networks:
+  audio-network:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:

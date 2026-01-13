@@ -1,56 +1,20 @@
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
-
-# Visual Studio
-.vs/
+# .NET
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
 *.user
 *.suo
-*.userosscache
-*.sln.docstates
+*.cache
 
-# Rider
-.idea/
-*.sln.iml
+# Docker
+.dockerignore
 
-# User-specific files
-*.rsuser
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-
-# NuGet
-*.nupkg
-*.snupkg
-**/packages/*
-!**/packages/build/
-*.nuget.props
-*.nuget.targets
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Environment variables
-.env
-.env.local
+# Environment
 
 # Logs
-logs/
 *.log
+logs/
 
 # OS
 .DS_Store

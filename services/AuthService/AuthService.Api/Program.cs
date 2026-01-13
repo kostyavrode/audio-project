@@ -25,7 +25,9 @@ var configuration = builder.Configuration;
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddDbContext<OutboxDbContext>(options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<OutboxDbContext>(options => 
+    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.MigrationsAssembly("AuthService.Infrastructure")));
 
 builder.Services.AddIdentity<AuthService.Domain.Entities.User, IdentityRole>(options =>
     {
@@ -104,43 +106,49 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var corsOrigins = configuration.GetValue<string>("CORS_ORIGINS")?.Split(',') 
+    ?? new[] { "http://localhost:8000", "http://localhost:3000", "http://127.0.0.1:8000" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(corsOrigins)
             .AllowAnyMethod()
-            .AllowAnyHeader();
-        // Примечание: AllowCredentials() нельзя использовать с AllowAnyOrigin()
-        // Для работы с cookies нужно указать конкретные origins
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
 var app = builder.Build();
 
-// Автоматическое применение миграций при запуске (только для Development)
-if (app.Environment.IsDevelopment())
+using var scope = app.Services.CreateScope();
+var applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+var outboxDbContext = scope.ServiceProvider.GetRequiredService<OutboxDbContext>();
+var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+try
 {
-    using var scope = app.Services.CreateScope();
-    var applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    try
-    {
-        applicationDbContext.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating the database.");
-    }
+    applicationDbContext.Database.Migrate();
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "An error occurred while migrating the ApplicationDbContext.");
+}
+
+try
+{
+    outboxDbContext.Database.Migrate();
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "An error occurred while migrating the OutboxDbContext.");
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");

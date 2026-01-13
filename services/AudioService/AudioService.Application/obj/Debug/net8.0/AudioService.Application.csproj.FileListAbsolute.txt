@@ -8,6 +8,7 @@ E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.AssemblyInfoInputs.cache
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.AssemblyInfo.cs
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.csproj.CoreCompileInputs.cache
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.sourcelink.json
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioSer.E485C09F.Up2Date
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\AudioService.Application.dll
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Application\obj\Debug\net8.0\refint\AudioService.Application.dll
