@@ -36,17 +36,15 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserDto>> Register([FromBody] RegisterDto registerDto, CancellationToken cancellationToken = default)
     {
-        var userDto  = await _authService.RegisterAsync(registerDto, cancellationToken);
+        var userDto = await _authService.RegisterAsync(registerDto, cancellationToken);
         
-        var email = Email.Create(registerDto.Email);
-        var nickName = NickName.Create(registerDto.NickName);
-        var accesToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id,email, nickName);
+        var email = Email.Create(userDto.Email);
+        var nickName = NickName.Create(userDto.NickName);
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
         var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
         
-        SetCookie(_cookieSettings.AccessTokenCookieName, accesToken,TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
+        SetCookie(_cookieSettings.AccessTokenCookieName, accessToken, TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
         SetCookie(_cookieSettings.RefreshTokenCookieName, refreshToken, TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
-        
-        _logger.LogInformation($"User {userDto.Id} registered");
         
         return Ok(userDto);
     }
@@ -61,15 +59,13 @@ public class AuthController : ControllerBase
         
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
-        var accesToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id,email, nickName);
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
         var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
         
-        SetCookie(_cookieSettings.AccessTokenCookieName, accesToken, 
+        SetCookie(_cookieSettings.AccessTokenCookieName, accessToken, 
             TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
         SetCookie(_cookieSettings.RefreshTokenCookieName, refreshToken, 
             TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
-        
-        _logger.LogInformation("User logged in: {UserId}", userDto.Id);
         
         return Ok(userDto);
     }

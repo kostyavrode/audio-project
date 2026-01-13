@@ -29,7 +29,7 @@ public class AuthService : IAuthService
         var email = Email.Create(registerDto.Email);
         var nickName = NickName.Create(registerDto.NickName);
 
-        if (await _userRepository.ExistsByEmailAsync(email, cancellationToken: cancellationToken))
+        if (email.HasValue && await _userRepository.ExistsByEmailAsync(email, cancellationToken: cancellationToken))
         {
             throw new EmailAlreadyExistsException(email);
         }
@@ -50,16 +50,16 @@ public class AuthService : IAuthService
         
         user.ClearDomainEvents();
         
-        _logger.LogInformation($"User with id: {userId}, email:{email} has been registered");
+        _logger.LogInformation("User registered: {UserId}, NickName: {NickName}", userId, nickName.Value);
 
         return MapToUserDto(user);
     }
     
-        public async Task<UserDto> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default)
+    public async Task<UserDto> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default)
     {
-        var email = Email.Create(loginDto.Email);
+        var nickName = NickName.Create(loginDto.NickName);
         
-        var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
+        var user = await _userRepository.GetByNickNameAsync(nickName, cancellationToken);
         
         if (user == null)
         {
@@ -74,7 +74,7 @@ public class AuthService : IAuthService
             throw new InvalidCredentialsException();
         }
         
-        _logger.LogInformation("User logged in: {UserId}, Email: {Email}", user.Id, email.Value);
+        _logger.LogInformation("User logged in: {UserId}, NickName: {NickName}", user.Id, nickName.Value);
         
         return MapToUserDto(user);
     }
@@ -127,7 +127,7 @@ public class AuthService : IAuthService
         return new UserDto
         {
             Id = user.Id,
-            Email = user.Email.Value,
+            Email = user.Email?.Value,
             NickName = user.NickName.Value,
             CreatedAt = user.CreatedAt
         };

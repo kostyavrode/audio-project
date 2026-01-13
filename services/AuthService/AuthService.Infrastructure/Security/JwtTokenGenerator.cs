@@ -19,18 +19,22 @@ public class JwtTokenGenerator
         _tokenHandler = new JwtSecurityTokenHandler();
     }
     
-    public string GenerateAccessToken(string userId, Email email, NickName nickName)
+    public string GenerateAccessToken(string userId, Email? email, NickName nickName)
     {
         var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, userId),
-            new Claim(JwtRegisteredClaimNames.Email, email.Value),
             new Claim("nickname", nickName.Value),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat, 
                 new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds().ToString(), 
                 ClaimValueTypes.Integer64)
         };
+        
+        if (email != null && email.HasValue)
+        {
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, email.Value!));
+        }
         
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

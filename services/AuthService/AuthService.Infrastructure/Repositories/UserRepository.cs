@@ -34,8 +34,9 @@ public class UserRepository : IUserRepository
     
     public async Task<bool> ExistsByEmailAsync(Email email, CancellationToken cancellationToken = default)
     {
-        // EF Core автоматически применяет конверсию из HasConversion
-        return await _context.Users.AnyAsync(u => u.Email == email, cancellationToken);
+        if (email == null || !email.HasValue)
+            return false;
+        return await _context.Users.AnyAsync(u => u.Email != null && u.Email == email, cancellationToken);
     }
 
     public async Task<User?> GetByNickNameAsync(NickName nickName, CancellationToken cancellationToken = default)
