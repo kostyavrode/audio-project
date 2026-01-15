@@ -127,25 +127,6 @@ services:
     networks:
       - audio-network
 
-  nginx:
-    image: nginx:alpine
-    container_name: audio-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ../site:/var/www/html:ro
-    depends_on:
-      - auth-service
-      - groups-service
-      - chat-service
-      - audio-service
-    restart: unless-stopped
-    networks:
-      - audio-network
-
 networks:
   audio-network:
     driver: bridge

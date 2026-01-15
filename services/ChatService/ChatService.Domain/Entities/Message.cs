@@ -9,11 +9,13 @@ public class Message : BaseEntity
     
     public string UserId {get; private set;} = string.Empty;
     
+    public string UserNickName { get; private set; } = string.Empty;
+    
     public string Content { get; private set; } = string.Empty;
     
     private Message() { }
 
-    public static Message Create(string Id, string groupId, string userId, string content)
+    public static Message Create(string Id, string groupId, string userId, string content, string userNickName)
     {
         if (string.IsNullOrWhiteSpace(Id))
         {
@@ -46,7 +48,8 @@ public class Message : BaseEntity
             GroupId = groupId,
             UserId = userId,
             Content = content.Trim(),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UserNickName = userNickName
         };
         
         message.AddDomainEvent(new MessageSentEvent(message.Id, message.GroupId, message.UserId, message.Content, message.CreatedAt));

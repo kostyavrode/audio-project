@@ -18,7 +18,7 @@ public class MessageService : IMessageService
         _groupMemberRepository = groupMemberRepository ?? throw new ArgumentNullException(nameof(groupMemberRepository));
     }
 
-    public async Task<MessageDto> SendMessageAsync(SendMessageDto sendMessageDto, string userId, CancellationToken cancellationToken = default)
+    public async Task<MessageDto> SendMessageAsync(SendMessageDto sendMessageDto, string userId, string userNickName, CancellationToken cancellationToken = default)
     {
         if (sendMessageDto == null)
         {
@@ -38,7 +38,7 @@ public class MessageService : IMessageService
         }
 
         var messageId = Guid.NewGuid().ToString();
-        var message = Message.Create(messageId, sendMessageDto.GroupId, userId, sendMessageDto.Content);
+        var message = Message.Create(messageId, sendMessageDto.GroupId, userId, sendMessageDto.Content, userNickName);
 
         await _messageRepository.AddAsync(message, cancellationToken);
         await _messageRepository.SaveChangesAsync(cancellationToken);
