@@ -30,6 +30,9 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
         
         builder.Property(m => m.CreatedAt)
             .IsRequired();
+
+        builder.Property(m => m.UserNickName)
+            .IsRequired();
         
         builder.HasIndex(m => m.GroupId);
         builder.HasIndex(m => new { m.GroupId, m.CreatedAt });

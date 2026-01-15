@@ -113,10 +113,17 @@ public class ChatHub : Hub
             await Clients.Caller.SendAsync("Error", "User not authenticated");
             return;
         }
+        
+        var userNickName = GetUserNickName();
+        if (string.IsNullOrEmpty(userNickName))
+        {
+            await Clients.Caller.SendAsync("Error", "User not authenticated");
+            return;
+        }
 
         try
         {
-            var messageDto = await _messageService.SendMessageAsync(sendMessageDto, userId);
+            var messageDto = await _messageService.SendMessageAsync(sendMessageDto, userId, userNickName);
             
             await Clients.Group(sendMessageDto.GroupId).SendAsync("ReceiveMessage", messageDto);
             
@@ -145,5 +152,23 @@ public class ChatHub : Hub
             }
         }
         return userId;
+    }
+
+    private string? GetUserNickName()
+    {
+        string? userNickName = null;
+        if (Context.User != null)
+        {
+            userNickName = Context.User.FindFirstValue(ClaimTypes.Name);
+        }
+
+        if (string.IsNullOrEmpty(userNickName))
+        {
+            if (Context.User != null)
+            {
+                userNickName = Context.User.FindFirstValue("nickname");
+            }
+        }
+        return userNickName;
     }
 }
