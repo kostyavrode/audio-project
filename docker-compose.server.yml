@@ -47,6 +47,8 @@ services:
       - "127.0.0.1:8088:8088"      # HTTP API
       - "127.0.0.1:8188:8188"      # WebSocket
       - "10000-10100:10000-10100/udp"  # RTP/RTCP (нужен публичный доступ)
+    volumes:
+      - ./janus-config/janus.jcfg:/usr/local/etc/janus/janus.jcfg:ro
     restart: unless-stopped
 
   auth-service:
