@@ -101,7 +101,8 @@ public class MessageService : IMessageService
             GroupId = message.GroupId,
             UserId = message.UserId,
             Content = message.Content,
-            CreatedAt = message.CreatedAt
+            CreatedAt = message.CreatedAt,
+            UserNickName = message.UserNickName
         };
     }
 }
