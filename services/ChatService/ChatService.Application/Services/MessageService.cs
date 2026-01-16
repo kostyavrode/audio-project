@@ -2,6 +2,7 @@ using ChatService.Application.DTOs;
 using ChatService.Domain.Entities;
 using ChatService.Domain.Exceptions;
 using ChatService.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace ChatService.Application.Services;
 
@@ -9,13 +10,16 @@ public class MessageService : IMessageService
 {
     private readonly IMessageRepository _messageRepository;
     private readonly IGroupMemberRepository _groupMemberRepository;
+    private readonly ILogger _logger; 
 
     public MessageService(
         IMessageRepository messageRepository,
-        IGroupMemberRepository groupMemberRepository)
+        IGroupMemberRepository groupMemberRepository,
+        ILogger<MessageService> logger)
     {
-        _messageRepository = messageRepository ?? throw new ArgumentNullException(nameof(messageRepository));
-        _groupMemberRepository = groupMemberRepository ?? throw new ArgumentNullException(nameof(groupMemberRepository));
+        _messageRepository = messageRepository;
+        _groupMemberRepository = groupMemberRepository;
+        _logger = logger;
     }
 
     public async Task<MessageDto> SendMessageAsync(SendMessageDto sendMessageDto, string userId, string userNickName, CancellationToken cancellationToken = default)
@@ -78,8 +82,14 @@ public class MessageService : IMessageService
             getMessagesDto.PageSize, 
             offset, 
             cancellationToken);
-
-        var messageDtos = messages.Select(MapToMessageDto).ToList();
+        
+        _logger.LogInformation("First message UserNickName: '{Nick}'", messages.FirstOrDefault()?.UserNickName);
+        
+        var messageDtos = messages.Select(m => {
+            var dto = MapToMessageDto(m);
+            _logger.LogInformation("Mapped: Id={Id}, UserNickName='{Nick}'", dto.Id, dto.UserNickName);
+            return dto;
+        }).ToList();
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)getMessagesDto.PageSize);
 
