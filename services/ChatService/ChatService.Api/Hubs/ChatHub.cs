@@ -120,6 +120,8 @@ public class ChatHub : Hub
             await Clients.Caller.SendAsync("Error", "User not authenticated");
             return;
         }
+        
+        _logger.LogInformation("Nick in token: {Nick}", userNickName);
 
         try
         {
