@@ -73,7 +73,7 @@ public class ChatHub : Hub
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
-        _logger.LogInformation("User {UserId} joined group {GroupId}", userId, groupId);
+        _logger.LogInformation("U   ser {UserId} joined group {GroupId}", userId, groupId);
         
         await Clients.Caller.SendAsync("JoinedGroup", groupId);
     }

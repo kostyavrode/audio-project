@@ -83,11 +83,9 @@ public class MessageService : IMessageService
             offset, 
             cancellationToken);
         
-        _logger.LogError("First message UserNickName: '{Nick}'", messages.FirstOrDefault()?.UserNickName);
-        
         var messageDtos = messages.Select(m => {
             var dto = MapToMessageDto(m);
-            _logger.LogError("Mapped: Id={Id}, UserNickName='{Nick}'", dto.Id, dto.UserNickName);
+            _logger.LogDebug("Get messages");
             return dto;
         }).ToList();
 
