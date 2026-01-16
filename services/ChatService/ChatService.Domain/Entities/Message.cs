@@ -9,7 +9,7 @@ public class Message : BaseEntity
     
     public string UserId {get; private set;} = string.Empty;
     
-    public string UserNickName { get; set; } = string.Empty;
+    public string UserNickName { get; private set; } = string.Empty;
     
     public string Content { get; private set; } = string.Empty;
     
