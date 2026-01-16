@@ -27,14 +27,17 @@ public class ChatHub : Hub
 
     public override async Task OnConnectedAsync()
     {
+        Console.WriteLine("DEBUG: OnConnectedAsync called");
         var userId = GetUserId();
+        Console.WriteLine($"DEBUG: userId = {userId ?? "NULL"}");
+        
         if (string.IsNullOrEmpty(userId))
         {
             Context.Abort();
             return;
         }
 
-        _logger.LogInformation("User {UserId} connected to ChatHub", userId);
+        Console.WriteLine($"DEBUG: User {userId} connected to ChatHub");
         await base.OnConnectedAsync();
     }
 
@@ -43,7 +46,7 @@ public class ChatHub : Hub
         var userId = GetUserId();
         if (!string.IsNullOrEmpty(userId))
         {
-            _logger.LogInformation("User {UserId} disconnected from ChatHub", userId);
+            Console.WriteLine($"DEBUG: User {userId} disconnected from ChatHub");
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -51,6 +54,8 @@ public class ChatHub : Hub
 
     public async Task JoinGroup(string groupId)
     {
+        Console.WriteLine($"DEBUG: JoinGroup called with groupId = {groupId}");
+        
         if (string.IsNullOrWhiteSpace(groupId))
         {
             await Clients.Caller.SendAsync("Error", "Group ID is required");
@@ -58,6 +63,8 @@ public class ChatHub : Hub
         }
 
         var userId = GetUserId();
+        Console.WriteLine($"DEBUG: JoinGroup userId = {userId ?? "NULL"}");
+        
         if (string.IsNullOrEmpty(userId))
         {
             await Clients.Caller.SendAsync("Error", "User not authenticated");
@@ -65,15 +72,17 @@ public class ChatHub : Hub
         }
 
         var isMember = await _groupMemberRepository.ExistsAsync(groupId, userId);
+        Console.WriteLine($"DEBUG: isMember = {isMember}");
+        
         if (!isMember)
         {
-            _logger.LogWarning("User {UserId} attempted to join group {GroupId} but is not a member in database", userId, groupId);
+            Console.WriteLine($"DEBUG: User {userId} is NOT a member of group {groupId}");
             await Clients.Caller.SendAsync("Error", "You are not a member of this group. Please join the group through GroupsService first.");
             return;
         }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
-        _logger.LogInformation("U   ser {UserId} joined group {GroupId}", userId, groupId);
+        Console.WriteLine($"DEBUG: User {userId} joined group {groupId}");
         
         await Clients.Caller.SendAsync("JoinedGroup", groupId);
     }
@@ -94,20 +103,27 @@ public class ChatHub : Hub
         }
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
-        _logger.LogInformation("User {UserId} left group {GroupId}", userId, groupId);
+        Console.WriteLine($"DEBUG: User {userId} left group {groupId}");
         
         await Clients.Caller.SendAsync("LeftGroup", groupId);
     }
 
     public async Task SendMessage(SendMessageDto sendMessageDto)
     {
+        Console.WriteLine("DEBUG: SendMessage called");
+        
         if (sendMessageDto == null)
         {
+            Console.WriteLine("DEBUG: sendMessageDto is NULL");
             await Clients.Caller.SendAsync("Error", "Message data is required");
             return;
         }
 
+        Console.WriteLine($"DEBUG: SendMessage groupId = {sendMessageDto.GroupId}, content = {sendMessageDto.Content}");
+
         var userId = GetUserId();
+        Console.WriteLine($"DEBUG: SendMessage userId = {userId ?? "NULL"}");
+        
         if (string.IsNullOrEmpty(userId))
         {
             await Clients.Caller.SendAsync("Error", "User not authenticated");
@@ -115,62 +131,74 @@ public class ChatHub : Hub
         }
         
         var userNickName = GetUserNickName();
+        Console.WriteLine($"DEBUG: SendMessage userNickName = {userNickName ?? "NULL"}");
+        
         if (string.IsNullOrEmpty(userNickName))
         {
-            await Clients.Caller.SendAsync("Error", "User not authenticated");
+            Console.WriteLine("DEBUG: userNickName is empty, returning error");
+            await Clients.Caller.SendAsync("Error", "User nickname not found");
             return;
         }
-        
-        _logger.LogInformation("Nick in token: {Nick}", userNickName);
 
         try
         {
+            Console.WriteLine($"DEBUG: Calling _messageService.SendMessageAsync");
             var messageDto = await _messageService.SendMessageAsync(sendMessageDto, userId, userNickName);
+            Console.WriteLine($"DEBUG: Message saved with Id = {messageDto.Id}");
             
             await Clients.Group(sendMessageDto.GroupId).SendAsync("ReceiveMessage", messageDto);
-            
-            _logger.LogInformation("Message {MessageId} sent to group {GroupId} by user {UserId}", 
-                messageDto.Id, sendMessageDto.GroupId, userId);
+            Console.WriteLine($"DEBUG: Message {messageDto.Id} sent to group {sendMessageDto.GroupId} by user {userId}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending message to group {GroupId}", sendMessageDto.GroupId);
+            Console.WriteLine($"DEBUG: Error sending message: {ex.Message}");
             await Clients.Caller.SendAsync("Error", ex.Message);
         }
     }
 
     private string? GetUserId()
     {
-        string? userId = null;
-        if (Context.User != null)
+        if (Context.User == null)
         {
-            userId = Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine("DEBUG: GetUserId - Context.User is NULL");
+            return null;
         }
+
+        Console.WriteLine("DEBUG: GetUserId - All claims:");
+        foreach (var claim in Context.User.Claims)
+        {
+            Console.WriteLine($"DEBUG:   {claim.Type} = {claim.Value}");
+        }
+
+        var userId = Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        Console.WriteLine($"DEBUG: GetUserId - ClaimTypes.NameIdentifier = {userId ?? "NULL"}");
+        
         if (string.IsNullOrEmpty(userId))
         {
-            if (Context.User != null)
-            {
-                userId = Context.User.FindFirstValue("sub");
-            }
+            userId = Context.User.FindFirstValue("sub");
+            Console.WriteLine($"DEBUG: GetUserId - 'sub' claim = {userId ?? "NULL"}");
         }
+        
         return userId;
     }
 
     private string? GetUserNickName()
     {
-        string? userNickName = null;
-        if (Context.User != null)
+        if (Context.User == null)
         {
-            userNickName = Context.User.FindFirstValue(ClaimTypes.Name);
+            Console.WriteLine("DEBUG: GetUserNickName - Context.User is NULL");
+            return null;
         }
+
+        var userNickName = Context.User.FindFirstValue(ClaimTypes.Name);
+        Console.WriteLine($"DEBUG: GetUserNickName - ClaimTypes.Name = {userNickName ?? "NULL"}");
 
         if (string.IsNullOrEmpty(userNickName))
         {
-            if (Context.User != null)
-            {
-                userNickName = Context.User.FindFirstValue("nickname");
-            }
+            userNickName = Context.User.FindFirstValue("nickname");
+            Console.WriteLine($"DEBUG: GetUserNickName - 'nickname' claim = {userNickName ?? "NULL"}");
         }
+        
         return userNickName;
     }
 }

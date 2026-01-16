@@ -17,9 +17,9 @@ public class OutboxPublisher : BackgroundService
     
     public OutboxPublisher(IServiceProvider serviceProvider, ILogger<OutboxPublisher> logger, IOptions<OutboxPublisherSettings> settings)
     {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _settings = settings.Value ?? throw new ArgumentNullException(nameof(settings));
+        _serviceProvider = serviceProvider;
+        _logger = logger;
+        _settings = settings.Value;
         
         _pollingInterval = TimeSpan.FromSeconds(_settings.PollingIntervalSeconds);
     }
