@@ -41,10 +41,13 @@ public class AuthController : ControllerBase
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
-        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenString = _jwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+        
+        await _authService.SetRefreshTokenAsync(userDto.Id, refreshTokenString, refreshTokenExpiresAt, cancellationToken);
         
         SetCookie(_cookieSettings.AccessTokenCookieName, accessToken, TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
-        SetCookie(_cookieSettings.RefreshTokenCookieName, refreshToken, TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
+        SetCookie(_cookieSettings.RefreshTokenCookieName, refreshTokenString, TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
         
         return Ok(userDto);
     }
@@ -60,11 +63,14 @@ public class AuthController : ControllerBase
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
-        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenString = _jwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+        
+        await _authService.SetRefreshTokenAsync(userDto.Id, refreshTokenString, refreshTokenExpiresAt, cancellationToken);
         
         SetCookie(_cookieSettings.AccessTokenCookieName, accessToken, 
             TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
-        SetCookie(_cookieSettings.RefreshTokenCookieName, refreshToken, 
+        SetCookie(_cookieSettings.RefreshTokenCookieName, refreshTokenString, 
             TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
         
         return Ok(userDto);
@@ -86,11 +92,14 @@ public class AuthController : ControllerBase
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
         var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
-        var newRefreshToken = _jwtTokenGenerator.GenerateRefreshToken();
+        var newRefreshTokenString = _jwtTokenGenerator.GenerateRefreshToken();
+        var newRefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+
+        await _authService.SetRefreshTokenAsync(userDto.Id, newRefreshTokenString, newRefreshTokenExpiresAt, cancellationToken);
 
         SetCookie(_cookieSettings.AccessTokenCookieName, newAccessToken, 
             TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
-        SetCookie(_cookieSettings.RefreshTokenCookieName, newRefreshToken, 
+        SetCookie(_cookieSettings.RefreshTokenCookieName, newRefreshTokenString, 
             TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
         
         return Ok(userDto);

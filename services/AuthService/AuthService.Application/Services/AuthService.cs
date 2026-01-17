@@ -92,18 +92,38 @@ public class AuthService : IAuthService
     
     public async Task<UserDto> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            throw new InvalidCredentialsException("Refresh token not found");
+        }
+        
         var user = await _userRepository.GetByRefreshTokenAsync(refreshToken, cancellationToken);
         if (user == null || user.RefreshToken == null)
         {
-            throw new InvalidCredentialsException();
+            throw new InvalidCredentialsException("Invalid or expired refresh token");
         }
         
         if (user.RefreshToken.IsExpired() || user.RefreshToken.IsRevoked)
         {
-            throw new InvalidCredentialsException();
+            throw new InvalidCredentialsException("Refresh token has expired or been revoked");
         }
         
         return MapToUserDto(user);
+    }
+    
+    public async Task SetRefreshTokenAsync(string userId, string refreshToken, DateTime expiresAt, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user == null)
+        {
+            throw new UserNotFoundException(userId);
+        }
+        
+        var refreshTokenValueObject = RefreshToken.Create(refreshToken, expiresAt);
+        user.SetRefreshToken(refreshTokenValueObject);
+        
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        await _userRepository.SaveChangesAsync(cancellationToken);
     }
     
     public async Task LogoutAsync(string userId, CancellationToken cancellationToken = default)

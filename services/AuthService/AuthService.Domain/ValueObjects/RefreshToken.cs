@@ -1,4 +1,4 @@
-﻿namespace AuthService.Domain.ValueObjects;
+namespace AuthService.Domain.ValueObjects;
 
 public class RefreshToken : IEquatable<RefreshToken>
 {
@@ -16,6 +16,11 @@ public class RefreshToken : IEquatable<RefreshToken>
         ExpiresAt = expiresAt;
         CreatedAt = createdAt;
         IsRevoked = isRevoked;
+    }
+    
+    public static RefreshToken Create(string token, DateTime expiresAt)
+    {
+        return new RefreshToken(token, expiresAt, DateTime.UtcNow, false);
     }
     
     public static RefreshToken FromDatabase(string token, DateTime expiresAt, DateTime createdAt, bool isRevoked)

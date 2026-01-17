@@ -1,4 +1,4 @@
-﻿using AuthService.Application.DTOs;
+using AuthService.Application.DTOs;
 
 namespace AuthService.Application.Services;
 
@@ -11,6 +11,8 @@ public interface IAuthService
     Task<UserDto> GetCurrentUserAsync(string userId, CancellationToken cancellationToken = default);
     
     Task<UserDto> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
+    
+    Task SetRefreshTokenAsync(string userId, string refreshToken, DateTime expiresAt, CancellationToken cancellationToken = default);
     
     Task LogoutAsync(string userId, CancellationToken cancellationToken = default);
 }
