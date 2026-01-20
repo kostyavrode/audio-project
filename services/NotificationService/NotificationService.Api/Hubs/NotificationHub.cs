@@ -136,7 +136,23 @@ public class NotificationHub : Hub
             var messageJson = await response.Content.ReadAsStringAsync();
             var messageDto = JsonSerializer.Deserialize<JsonElement>(messageJson);
 
-            await Clients.Caller.SendAsync("ReceiveMessage", messageDto);
+            if (messageDto.TryGetProperty("groupId", out var groupIdElement))
+            {
+                var groupId = groupIdElement.GetString();
+                if (!string.IsNullOrEmpty(groupId))
+                {
+                    await Clients.Group(groupId).SendAsync("ReceiveMessage", messageDto);
+                    _logger.LogInformation("Message sent to all users in group {GroupId} via SignalR", groupId);
+                }
+                else
+                {
+                    await Clients.Caller.SendAsync("ReceiveMessage", messageDto);
+                }
+            }
+            else
+            {
+                await Clients.Caller.SendAsync("ReceiveMessage", messageDto);
+            }
             
             _logger.LogInformation("Message sent via ChatService API for user {UserId}", userId);
         }
