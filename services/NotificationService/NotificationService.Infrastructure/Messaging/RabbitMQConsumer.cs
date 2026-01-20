@@ -67,6 +67,13 @@ public class RabbitMQConsumer : BackgroundService
                 autoDelete: false
             );
             
+            _channel.ExchangeDeclare(
+                exchange: "audio-events",
+                type: ExchangeType.Direct,
+                durable: true,
+                autoDelete: false
+            );
+            
             _channel.QueueDeclare(
                 queue: QueueName,
                 durable: true,
