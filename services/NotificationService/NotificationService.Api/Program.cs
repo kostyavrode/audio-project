@@ -6,6 +6,7 @@ using NotificationService.Application.Services;
 using NotificationService.Infrastructure.Messaging;
 using System.Text;
 using Microsoft.AspNetCore.SignalR;
+using NotificationServiceClass = NotificationService.Api.Services.NotificationService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,7 +53,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSignalR();
 
-builder.Services.AddScoped<INotificationService, Api.Services.NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationServiceClass>();
 
 builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection(RabbitMQSettings.SectionName));
 builder.Services.AddSingleton<RabbitMQConnectionFactory>();
