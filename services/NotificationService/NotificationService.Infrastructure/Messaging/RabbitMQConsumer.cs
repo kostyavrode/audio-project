@@ -32,17 +32,17 @@ public class RabbitMQConsumer : BackgroundService
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await StartAsync(stoppingToken);
+        await InitializeAsync(stoppingToken);
         
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(1000, stoppingToken);
         }
         
-        await StopAsync(stoppingToken);
+        await CleanupAsync(stoppingToken);
     }
     
-    private Task StartAsync(CancellationToken cancellationToken = default)
+    private Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -130,7 +130,7 @@ public class RabbitMQConsumer : BackgroundService
         return Task.CompletedTask;
     }
     
-    private Task StopAsync(CancellationToken cancellationToken = default)
+    private Task CleanupAsync(CancellationToken cancellationToken = default)
     {
         _channel?.Close();
         _connection?.Close();

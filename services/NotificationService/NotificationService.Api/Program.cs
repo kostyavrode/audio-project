@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using NotificationService.Api.Hubs;
+using NotificationService.Api.Services;
 using NotificationService.Application.Services;
+using NotificationService.Infrastructure.Messaging;
 using System.Text;
 using Microsoft.AspNetCore.SignalR;
 
@@ -50,11 +52,11 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSignalR();
 
-builder.Services.AddScoped<INotificationService, Api.Services.NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
-builder.Services.Configure<Infrastructure.Messaging.RabbitMQSettings>(builder.Configuration.GetSection(Infrastructure.Messaging.RabbitMQSettings.SectionName));
-builder.Services.AddSingleton<Infrastructure.Messaging.RabbitMQConnectionFactory>();
-builder.Services.AddHostedService<Infrastructure.Messaging.RabbitMQConsumer>();
+builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection(RabbitMQSettings.SectionName));
+builder.Services.AddSingleton<RabbitMQConnectionFactory>();
+builder.Services.AddHostedService<RabbitMQConsumer>();
 
 var corsOrigins = builder.Configuration.GetValue<string>("CORS_ORIGINS")?.Split(',') 
     ?? new[] { "http://localhost:8000", "http://localhost:3000", "http://127.0.0.1:8000" };
