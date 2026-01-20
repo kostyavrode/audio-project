@@ -131,6 +131,8 @@ public class ChatHub : Hub
         {
             var messageDto = await _messageService.SendMessageAsync(sendMessageDto, userId, userNickName);
             
+            await Clients.Caller.SendAsync("ReceiveMessage", messageDto);
+            
             var messageJson = JsonSerializer.Serialize(messageDto);
             await _rabbitMQPublisher.PublishAsync("chat-messages", "ChatMessage", messageJson);
             
