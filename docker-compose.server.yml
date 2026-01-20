@@ -178,6 +178,7 @@ services:
       - JWT_SECRET=${JWT_SECRET_KEY}
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - ChatServiceUrl=http://127.0.0.1:5003
       - RabbitMQ__HostName=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__UserName=${RABBITMQ_USER}
@@ -188,6 +189,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+      chat-service:
+        condition: service_started
     restart: unless-stopped
 
 volumes:

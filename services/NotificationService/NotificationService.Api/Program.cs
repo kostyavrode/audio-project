@@ -87,6 +87,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 builder.Services.AddSignalR();
+builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<INotificationService, NotificationServiceClass>();
 

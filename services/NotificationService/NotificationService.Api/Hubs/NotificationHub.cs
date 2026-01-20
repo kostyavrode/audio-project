@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 
 namespace NotificationService.Api.Hubs;
 
@@ -8,10 +10,17 @@ namespace NotificationService.Api.Hubs;
 public class NotificationHub : Hub
 {
     private readonly ILogger<NotificationHub> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
 
-    public NotificationHub(ILogger<NotificationHub> logger)
+    public NotificationHub(
+        ILogger<NotificationHub> logger,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration)
     {
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
     }
 
     public override async Task OnConnectedAsync()
@@ -78,6 +87,89 @@ public class NotificationHub : Hub
         _logger.LogInformation("User {UserId} left group {GroupId}", userId, groupId);
         
         await Clients.Caller.SendAsync("LeftGroup", groupId);
+    }
+
+    public async Task SendMessage(object sendMessageDto)
+    {
+        if (sendMessageDto == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Message data is required");
+            return;
+        }
+
+        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+        {
+            await Clients.Caller.SendAsync("Error", "User not authenticated");
+            return;
+        }
+
+        try
+        {
+            var chatServiceUrl = _configuration.GetValue<string>("ChatServiceUrl") 
+                ?? throw new InvalidOperationException("ChatServiceUrl is not configured");
+
+            var token = GetToken();
+            if (string.IsNullOrEmpty(token))
+            {
+                await Clients.Caller.SendAsync("Error", "Token not found");
+                return;
+            }
+
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Authorization = 
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var json = JsonSerializer.Serialize(sendMessageDto);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await httpClient.PostAsync($"{chatServiceUrl}/api/Messages", content);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("ChatService API error: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                await Clients.Caller.SendAsync("Error", $"Failed to send message: {response.StatusCode}");
+                return;
+            }
+
+            var messageJson = await response.Content.ReadAsStringAsync();
+            var messageDto = JsonSerializer.Deserialize<JsonElement>(messageJson);
+
+            await Clients.Caller.SendAsync("ReceiveMessage", messageDto);
+            
+            _logger.LogInformation("Message sent via ChatService API for user {UserId}", userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending message via ChatService API");
+            await Clients.Caller.SendAsync("Error", ex.Message);
+        }
+    }
+
+    private string? GetToken()
+    {
+        if (Context.User == null) return null;
+
+        var token = Context.Request.Query["access_token"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(token))
+        {
+            return token;
+        }
+
+        token = Context.GetHttpContext()?.Request.Cookies["access_token"];
+        if (!string.IsNullOrEmpty(token))
+        {
+            return token;
+        }
+
+        var authHeader = Context.GetHttpContext()?.Request.Headers["Authorization"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            return authHeader.Substring("Bearer ".Length).Trim();
+        }
+
+        return null;
     }
 
     private string? GetUserId()
