@@ -1,4 +1,4 @@
-using AudioService.Infrastructure.Messaging;
+using AudioService.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

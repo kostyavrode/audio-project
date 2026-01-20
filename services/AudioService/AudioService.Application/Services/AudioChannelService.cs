@@ -2,7 +2,6 @@ using AudioService.Application.DTOs;
 using AudioService.Domain.Entities;
 using AudioService.Domain.Exceptions;
 using AudioService.Domain.Interfaces;
-using AudioService.Infrastructure.Messaging;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 

@@ -1,4 +1,4 @@
-namespace AudioService.Infrastructure.Messaging;
+namespace AudioService.Domain.Interfaces;
 
 public interface IRabbitMQPublisher
 {

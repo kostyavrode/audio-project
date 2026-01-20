@@ -1,4 +1,5 @@
 using System.Text;
+using AudioService.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
