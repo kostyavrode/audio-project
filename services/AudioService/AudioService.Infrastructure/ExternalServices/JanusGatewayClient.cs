@@ -322,19 +322,29 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var sessionId = await CreateSessionAsync(cancellationToken);
             var handleId = await AttachPluginAsync(sessionId, cancellationToken);
 
+            var body = new Dictionary<string, object>
+            {
+                { "request", "configure" },
+                { "room", roomId },
+                { "id", participantId },
+                { "volume", volume }
+            };
+
+            if (!string.IsNullOrEmpty(_settings.ApiSecret))
+            {
+                body["secret"] = _settings.ApiSecret;
+            }
+
             var request = new
             {
                 janus = "message",
                 plugin = "janus.plugin.audiobridge",
                 transaction = Guid.NewGuid().ToString(),
-                body = new
-                {
-                    request = "configure",
-                    room = roomId,
-                    id = participantId,
-                    volume = volume
-                }
+                body = body
             };
+
+            var requestJson = JsonSerializer.Serialize(request);
+            _logger.LogInformation("Janus set volume request: {Request}", requestJson);
 
             var response = await _httpClient.PostAsJsonAsync(
                 $"/janus/{sessionId}/{handleId}",
@@ -342,9 +352,15 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 cancellationToken
             );
 
-            response.EnsureSuccessStatusCode();
-
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation("Janus set volume response: {Response}", responseContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Janus API returned error status {StatusCode}: {Response}", response.StatusCode, responseContent);
+                response.EnsureSuccessStatusCode();
+            }
+
             var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
 
             if (result.TryGetProperty("plugindata", out var pluginData) &&
@@ -355,11 +371,18 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 {
                     var errorCodeValue = errorCode.GetInt32();
                     var errorMessage = error.GetString();
+                    _logger.LogError("Janus error: {ErrorMessage} (code: {ErrorCode})", errorMessage, errorCodeValue);
                     throw new InvalidOperationException($"Janus error: {errorMessage} (code: {errorCodeValue})");
+                }
+
+                if (data.TryGetProperty("configured", out var configured) && configured.GetString() == "ok")
+                {
+                    _logger.LogInformation("Successfully set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
+                    return;
                 }
             }
 
-            _logger.LogInformation("Set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
+            _logger.LogWarning("Unexpected Janus response structure for set volume. Response: {Response}", responseContent);
         }
         catch (Exception ex)
         {
