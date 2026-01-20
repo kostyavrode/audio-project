@@ -177,10 +177,10 @@ public class NotificationHub : Hub
     {
         if (Context.User == null) return null;
 
-        var userId = Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = Context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
         {
-            userId = Context.User.FindFirstValue("sub");
+            userId = Context.User.FindFirst("sub")?.Value;
         }
         return userId;
     }
