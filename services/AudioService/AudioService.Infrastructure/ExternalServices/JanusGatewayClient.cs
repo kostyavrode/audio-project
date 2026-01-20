@@ -317,10 +317,15 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
 
     public async Task SetParticipantVolumeAsync(long roomId, long participantId, int volume, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("SetParticipantVolumeAsync called: RoomId={RoomId}, ParticipantId={ParticipantId}, Volume={Volume}", roomId, participantId, volume);
+        
         try
         {
             var sessionId = await CreateSessionAsync(cancellationToken);
+            _logger.LogInformation("Created Janus session: {SessionId}", sessionId);
+            
             var handleId = await AttachPluginAsync(sessionId, cancellationToken);
+            _logger.LogInformation("Attached to AudioBridge plugin: {HandleId}", handleId);
 
             var body = new Dictionary<string, object>
             {
@@ -333,6 +338,11 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             if (!string.IsNullOrEmpty(_settings.ApiSecret))
             {
                 body["secret"] = _settings.ApiSecret;
+                _logger.LogInformation("Using API secret for admin operation");
+            }
+            else
+            {
+                _logger.LogWarning("API secret is not configured - volume change may not work for other participants");
             }
 
             var request = new
@@ -343,8 +353,8 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 body = body
             };
 
-            var requestJson = JsonSerializer.Serialize(request);
-            _logger.LogInformation("Janus set volume request: {Request}", requestJson);
+            var requestJson = JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true });
+            _logger.LogInformation("Janus set volume request:\n{Request}", requestJson);
 
             var response = await _httpClient.PostAsJsonAsync(
                 $"/janus/{sessionId}/{handleId}",
@@ -375,10 +385,28 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     throw new InvalidOperationException($"Janus error: {errorMessage} (code: {errorCodeValue})");
                 }
 
-                if (data.TryGetProperty("configured", out var configured) && configured.GetString() == "ok")
+                if (data.TryGetProperty("configured", out var configured))
                 {
-                    _logger.LogInformation("Successfully set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
-                    return;
+                    var configuredValue = configured.GetString();
+                    _logger.LogInformation("Janus configure response: configured={Configured}", configuredValue);
+                    
+                    if (configuredValue == "ok")
+                    {
+                        _logger.LogInformation("Successfully set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
+                        return;
+                    }
+                }
+                
+                if (data.TryGetProperty("audiobridge", out var audiobridge))
+                {
+                    var audiobridgeValue = audiobridge.GetString();
+                    _logger.LogInformation("Janus audiobridge response: audiobridge={Audiobridge}", audiobridgeValue);
+                    
+                    if (audiobridgeValue == "event" || audiobridgeValue == "configured")
+                    {
+                        _logger.LogInformation("Successfully set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
+                        return;
+                    }
                 }
             }
 

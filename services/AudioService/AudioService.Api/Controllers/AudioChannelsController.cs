@@ -244,6 +244,8 @@ public class AudioChannelsController : ControllerBase
         [FromBody] SetParticipantVolumeDto dto,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("SetParticipantVolume called: ChannelId={ChannelId}, ParticipantId={ParticipantId}, Volume={Volume}", id, participantId, dto?.Volume);
+        
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdClaim))
         {
@@ -252,12 +254,15 @@ public class AudioChannelsController : ControllerBase
 
         if (string.IsNullOrEmpty(userIdClaim))
         {
+            _logger.LogWarning("User ID not found in token for SetParticipantVolume");
             return Unauthorized(new { error = "User ID not found in token" });
         }
 
         try
         {
+            _logger.LogInformation("Calling SetParticipantVolumeAsync: ChannelId={ChannelId}, ParticipantId={ParticipantId}, Volume={Volume}, UserId={UserId}", id, participantId, dto?.Volume, userIdClaim);
             await _audioChannelService.SetParticipantVolumeAsync(id, participantId, dto.Volume, userIdClaim, cancellationToken);
+            _logger.LogInformation("SetParticipantVolumeAsync completed successfully");
             return Ok(new { success = true });
         }
         catch (AudioChannelNotFoundException ex)
