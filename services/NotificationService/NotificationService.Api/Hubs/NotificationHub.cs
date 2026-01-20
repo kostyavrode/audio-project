@@ -149,21 +149,22 @@ public class NotificationHub : Hub
 
     private string? GetToken()
     {
-        if (Context.User == null) return null;
+        var httpContext = Context.GetHttpContext();
+        if (httpContext == null) return null;
 
-        var token = Context.Request.Query["access_token"].FirstOrDefault();
+        var token = httpContext.Request.Query["access_token"].FirstOrDefault();
         if (!string.IsNullOrEmpty(token))
         {
             return token;
         }
 
-        token = Context.GetHttpContext()?.Request.Cookies["access_token"];
+        token = httpContext.Request.Cookies["access_token"];
         if (!string.IsNullOrEmpty(token))
         {
             return token;
         }
 
-        var authHeader = Context.GetHttpContext()?.Request.Headers["Authorization"].FirstOrDefault();
+        var authHeader = httpContext.Request.Headers["Authorization"].FirstOrDefault();
         if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
             return authHeader.Substring("Bearer ".Length).Trim();
