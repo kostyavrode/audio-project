@@ -236,13 +236,25 @@ public class AudioChannelService : IAudioChannelService
 
         try
         {
+            // Пытаемся удалить старую комнату (может быть в AudioBridge или VideoRoom)
             try
             {
+                _logger.LogInformation("Attempting to delete old room {RoomId} before recreation", channel.JanusRoomId.Value);
                 await _janusGatewayClient.DeleteRoomAsync(channel.JanusRoomId.Value, cancellationToken);
+                _logger.LogInformation("Successfully deleted old room {RoomId}", channel.JanusRoomId.Value);
             }
-            catch { }
+            catch (Exception deleteEx)
+            {
+                _logger.LogWarning(deleteEx, "Failed to delete old room {RoomId}, continuing with recreation (room may not exist)", channel.JanusRoomId.Value);
+                // Игнорируем ошибку удаления - комната может не существовать
+            }
 
+            // Небольшая задержка перед созданием новой комнаты
+            await Task.Delay(500, cancellationToken);
+
+            _logger.LogInformation("Creating new VideoRoom {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
             await _janusGatewayClient.CreateRoomAsync(channel.JanusRoomId.Value, channel.Name, cancellationToken);
+            _logger.LogInformation("Successfully created VideoRoom {RoomId} for channel {ChannelId}", channel.JanusRoomId.Value, channelId);
 
             return true;
         }
