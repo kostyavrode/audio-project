@@ -104,10 +104,10 @@ public class MessagesController : ControllerBase
             return BadRequest(new { error = "Message data is required" });
         }
 
-        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userId))
         {
-            userId = User.FindFirstValue("sub");
+            userId = User.FindFirst("sub")?.Value;
         }
 
         if (string.IsNullOrEmpty(userId))
@@ -115,10 +115,10 @@ public class MessagesController : ControllerBase
             return Unauthorized(new { error = "User ID not found in token" });
         }
 
-        var userNickName = User.FindFirstValue(System.Security.Claims.ClaimTypes.Name);
+        var userNickName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
         if (string.IsNullOrEmpty(userNickName))
         {
-            userNickName = User.FindFirstValue("nickname");
+            userNickName = User.FindFirst("nickname")?.Value;
         }
 
         if (string.IsNullOrEmpty(userNickName))
