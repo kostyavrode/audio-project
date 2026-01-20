@@ -6,6 +6,7 @@ public interface IJanusGatewayClient
     Task DeleteRoomAsync(long roomId, CancellationToken cancellationToken = default);
     Task<JanusRoomInfo?> GetRoomInfoAsync(long roomId, CancellationToken cancellationToken = default);
     Task<List<JanusParticipant>> GetRoomParticipantsAsync(long roomId, CancellationToken cancellationToken = default);
+    Task SetParticipantVolumeAsync(long roomId, long participantId, int volume, CancellationToken cancellationToken = default);
 }
 
 public class JanusRoomInfo

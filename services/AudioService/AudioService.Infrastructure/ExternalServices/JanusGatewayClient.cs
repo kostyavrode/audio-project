@@ -315,6 +315,59 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
         throw new InvalidOperationException("Failed to parse handle ID from Janus response");
     }
 
+    public async Task SetParticipantVolumeAsync(long roomId, long participantId, int volume, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var sessionId = await CreateSessionAsync(cancellationToken);
+            var handleId = await AttachPluginAsync(sessionId, cancellationToken);
+
+            var request = new
+            {
+                janus = "message",
+                plugin = "janus.plugin.audiobridge",
+                transaction = Guid.NewGuid().ToString(),
+                body = new
+                {
+                    request = "configure",
+                    room = roomId,
+                    id = participantId,
+                    volume = volume
+                }
+            };
+
+            var response = await _httpClient.PostAsJsonAsync(
+                $"/janus/{sessionId}/{handleId}",
+                request,
+                cancellationToken
+            );
+
+            response.EnsureSuccessStatusCode();
+
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
+
+            if (result.TryGetProperty("plugindata", out var pluginData) &&
+                pluginData.TryGetProperty("data", out var data))
+            {
+                if (data.TryGetProperty("error_code", out var errorCode) &&
+                    data.TryGetProperty("error", out var error))
+                {
+                    var errorCodeValue = errorCode.GetInt32();
+                    var errorMessage = error.GetString();
+                    throw new InvalidOperationException($"Janus error: {errorMessage} (code: {errorCodeValue})");
+                }
+            }
+
+            _logger.LogInformation("Set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set volume for participant {ParticipantId} in room {RoomId}", participantId, roomId);
+            throw;
+        }
+    }
+
     public void Dispose()
     {
         _httpClient?.Dispose();
