@@ -50,7 +50,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSignalR();
 
-builder.Services.AddScoped<INotificationService, Application.Services.NotificationService>();
+builder.Services.AddScoped<INotificationService, Api.Services.NotificationService>();
 
 builder.Services.Configure<Infrastructure.Messaging.RabbitMQSettings>(builder.Configuration.GetSection(Infrastructure.Messaging.RabbitMQSettings.SectionName));
 builder.Services.AddSingleton<Infrastructure.Messaging.RabbitMQConnectionFactory>();

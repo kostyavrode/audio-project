@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
 using NotificationService.Api.Hubs;
+using NotificationService.Application.Services;
 
-namespace NotificationService.Application.Services;
+namespace NotificationService.Api.Services;
 
 public class NotificationService : INotificationService
 {
