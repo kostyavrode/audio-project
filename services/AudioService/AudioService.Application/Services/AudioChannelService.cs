@@ -2,7 +2,9 @@ using AudioService.Application.DTOs;
 using AudioService.Domain.Entities;
 using AudioService.Domain.Exceptions;
 using AudioService.Domain.Interfaces;
+using AudioService.Infrastructure.Messaging;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace AudioService.Application.Services;
 
@@ -11,17 +13,20 @@ public class AudioChannelService : IAudioChannelService
     private readonly IAudioChannelRepository _channelRepository;
     private readonly IJanusGatewayClient _janusGatewayClient;
     private readonly IGroupAccessChecker _groupAccessChecker;
+    private readonly IRabbitMQPublisher _rabbitMQPublisher;
     private readonly ILogger<AudioChannelService> _logger;
 
     public AudioChannelService(
         IAudioChannelRepository channelRepository,
         IJanusGatewayClient janusGatewayClient,
         IGroupAccessChecker groupAccessChecker,
+        IRabbitMQPublisher rabbitMQPublisher,
         ILogger<AudioChannelService> logger)
     {
         _channelRepository = channelRepository;
         _janusGatewayClient = janusGatewayClient;
         _groupAccessChecker = groupAccessChecker;
+        _rabbitMQPublisher = rabbitMQPublisher;
         _logger = logger;
     }
 
@@ -290,6 +295,61 @@ public class AudioChannelService : IAudioChannelService
         await _janusGatewayClient.SetParticipantVolumeAsync(channel.JanusRoomId.Value, participantId, volume, cancellationToken);
 
         _logger.LogInformation("Set volume {Volume} for participant {ParticipantId} in channel {ChannelId} by user {UserId}", volume, participantId, channelId, userId);
+    }
+
+    public async Task RegisterParticipantJoinedAsync(string channelId, string userId, RegisterParticipantDto participantDto, CancellationToken cancellationToken = default)
+    {
+        var channel = await _channelRepository.GetByIdAsync(channelId, cancellationToken);
+
+        if (channel == null)
+            throw new AudioChannelNotFoundException(channelId);
+
+        var isMember = await _groupAccessChecker.IsGroupMemberAsync(channel.GroupId, userId, cancellationToken);
+
+        if (!isMember)
+            throw new UnauthorizedAccessException("Only group members can register participant");
+
+        var eventData = new
+        {
+            groupId = channel.GroupId,
+            channelId = channelId,
+            userId = userId,
+            displayName = participantDto.DisplayName,
+            participantId = participantDto.ParticipantId
+        };
+
+        var message = JsonSerializer.Serialize(eventData);
+        await _rabbitMQPublisher.PublishAsync("audio-events", "AudioParticipantJoined", message, cancellationToken);
+
+        _logger.LogInformation("Participant joined event published: User {UserId} joined channel {ChannelId} in group {GroupId}", 
+            userId, channelId, channel.GroupId);
+    }
+
+    public async Task RegisterParticipantLeftAsync(string channelId, string userId, long participantId, CancellationToken cancellationToken = default)
+    {
+        var channel = await _channelRepository.GetByIdAsync(channelId, cancellationToken);
+
+        if (channel == null)
+            throw new AudioChannelNotFoundException(channelId);
+
+        var isMember = await _groupAccessChecker.IsGroupMemberAsync(channel.GroupId, userId, cancellationToken);
+
+        if (!isMember)
+            throw new UnauthorizedAccessException("Only group members can register participant");
+
+        var eventData = new
+        {
+            groupId = channel.GroupId,
+            channelId = channelId,
+            userId = userId,
+            participantId = participantId
+        };
+
+        var message = JsonSerializer.Serialize(eventData);
+        await _rabbitMQPublisher.PublishAsync("audio-events", "AudioParticipantLeft", message, cancellationToken);
+
+        _logger.LogInformation("Participant left event published: User {UserId} left channel {ChannelId} in group {GroupId}", 
+            userId, channelId, channel.GroupId);
     }
 
     private static AudioChannelDto MapToAudioChannelDto(AudioChannel channel)

@@ -5,6 +5,8 @@ using ChatService.Application.DTOs;
 using ChatService.Application.Services;
 using ChatService.Domain.Interfaces;
 using ChatService.Domain.Entities;
+using ChatService.Infrastructure.Messaging;
+using System.Text.Json;
 
 namespace ChatService.Api.Hubs;
 
@@ -13,15 +15,18 @@ public class ChatHub : Hub
 {
     private readonly IMessageService _messageService;
     private readonly IGroupMemberRepository _groupMemberRepository;
+    private readonly IRabbitMQPublisher _rabbitMQPublisher;
     private readonly ILogger<ChatHub> _logger;
 
     public ChatHub(
         IMessageService messageService,
         IGroupMemberRepository groupMemberRepository,
+        IRabbitMQPublisher rabbitMQPublisher,
         ILogger<ChatHub> logger)
     {
         _messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
         _groupMemberRepository = groupMemberRepository ?? throw new ArgumentNullException(nameof(groupMemberRepository));
+        _rabbitMQPublisher = rabbitMQPublisher ?? throw new ArgumentNullException(nameof(rabbitMQPublisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -126,9 +131,10 @@ public class ChatHub : Hub
         {
             var messageDto = await _messageService.SendMessageAsync(sendMessageDto, userId, userNickName);
             
-            await Clients.Group(sendMessageDto.GroupId).SendAsync("ReceiveMessage", messageDto);
+            var messageJson = JsonSerializer.Serialize(messageDto);
+            await _rabbitMQPublisher.PublishAsync("chat-messages", "ChatMessage", messageJson);
             
-            _logger.LogInformation("Message {MessageId} sent to group {GroupId} by user {UserId}", 
+            _logger.LogInformation("Message {MessageId} published to RabbitMQ for group {GroupId} by user {UserId}", 
                 messageDto.Id, sendMessageDto.GroupId, userId);
         }
         catch (Exception ex)

@@ -127,6 +127,29 @@ services:
     networks:
       - audio-network
 
+  notification-service:
+    build:
+      context: ./services/NotificationService
+      dockerfile: NotificationService.Api/Dockerfile
+    container_name: audio-notification-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - JWT_SECRET=${JWT_SECRET_KEY}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://audio-kostya.online}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - audio-network
+
 networks:
   audio-network:
     driver: bridge

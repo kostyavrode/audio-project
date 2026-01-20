@@ -277,4 +277,76 @@ public class AudioChannelsController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpPost("{id}/participants/joined")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RegisterParticipantJoined(
+        string id,
+        [FromBody] RegisterParticipantDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            userIdClaim = User.FindFirstValue("sub");
+        }
+
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            return Unauthorized(new { error = "User ID not found in token" });
+        }
+
+        try
+        {
+            await _audioChannelService.RegisterParticipantJoinedAsync(id, userIdClaim, dto, cancellationToken);
+            return Ok(new { success = true });
+        }
+        catch (AudioChannelNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/participants/{participantId}/left")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RegisterParticipantLeft(
+        string id,
+        long participantId,
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            userIdClaim = User.FindFirstValue("sub");
+        }
+
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            return Unauthorized(new { error = "User ID not found in token" });
+        }
+
+        try
+        {
+            await _audioChannelService.RegisterParticipantLeftAsync(id, userIdClaim, participantId, cancellationToken);
+            return Ok(new { success = true });
+        }
+        catch (AudioChannelNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+    }
 }
