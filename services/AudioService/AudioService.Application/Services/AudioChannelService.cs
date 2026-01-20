@@ -273,28 +273,6 @@ public class AudioChannelService : IAudioChannelService
         });
     }
 
-    public async Task SetParticipantVolumeAsync(string channelId, long participantId, int volume, string userId, CancellationToken cancellationToken = default)
-    {
-        var channel = await _channelRepository.GetByIdAsync(channelId, cancellationToken);
-
-        if (channel == null)
-            throw new AudioChannelNotFoundException(channelId);
-
-        var isMember = await _groupAccessChecker.IsGroupMemberAsync(channel.GroupId, userId, cancellationToken);
-
-        if (!isMember)
-            throw new UnauthorizedAccessException("Only group members can set participant volume");
-
-        if (!channel.JanusRoomId.HasValue)
-            throw new InvalidOperationException("Channel does not have a Janus room");
-
-        if (volume < 0 || volume > 200)
-            throw new DomainException("Volume must be between 0 and 200");
-
-        await _janusGatewayClient.SetParticipantVolumeAsync(channel.JanusRoomId.Value, participantId, volume, cancellationToken);
-
-        _logger.LogInformation("Set volume {Volume} for participant {ParticipantId} in channel {ChannelId} by user {UserId}", volume, participantId, channelId, userId);
-    }
 
     public async Task RegisterParticipantJoinedAsync(string channelId, string userId, RegisterParticipantDto participantDto, CancellationToken cancellationToken = default)
     {

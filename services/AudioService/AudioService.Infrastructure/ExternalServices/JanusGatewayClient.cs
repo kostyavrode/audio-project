@@ -34,14 +34,18 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var request = new
             {
                 janus = "message",
-                plugin = "janus.plugin.audiobridge",
+                plugin = "janus.plugin.videoroom",
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
                     request = "create",
                     room = roomId,
                     description = description,
-                    sampling = 16000
+                    publishers = 15,
+                    bitrate = 64000,
+                    fir_freq = 10,
+                    audiocodec = "opus",
+                    videocodec = "vp8"
                 }
             };
 
@@ -89,7 +93,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var request = new
             {
                 janus = "message",
-                plugin = "janus.plugin.audiobridge",
+                plugin = "janus.plugin.videoroom",
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
@@ -126,11 +130,11 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var request = new
             {
                 janus = "message",
-                plugin = "janus.plugin.audiobridge",
+                plugin = "janus.plugin.videoroom",
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
-                    request = "listparticipants",
+                    request = "list",
                     room = roomId
                 }
             };
@@ -166,8 +170,20 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     throw new InvalidOperationException($"Janus error: {errorMessage}");
                 }
 
-                // Если нет ошибки, проверяем наличие participants
-                if (data.TryGetProperty("participants", out var participantsElement))
+                // Если нет ошибки, проверяем наличие publishers (VideoRoom) или participants (AudioBridge)
+                if (data.TryGetProperty("publishers", out var publishersElement))
+                {
+                    var publishers = publishersElement.EnumerateArray().ToList();
+
+                    return new JanusRoomInfo
+                    {
+                        RoomId = roomId,
+                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
+                        ParticipantsCount = publishers.Count
+                    };
+                }
+                // Для обратной совместимости с AudioBridge
+                else if (data.TryGetProperty("participants", out var participantsElement))
                 {
                     var participants = participantsElement.EnumerateArray().ToList();
 
@@ -217,11 +233,11 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var request = new
             {
                 janus = "message",
-                plugin = "janus.plugin.audiobridge",
+                plugin = "janus.plugin.videoroom",
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
-                    request = "listparticipants",
+                    request = "list",
                     room = roomId
                 }
             };
@@ -245,7 +261,21 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     return participants;
                 }
 
-                if (data.TryGetProperty("participants", out var participantsElement))
+                // VideoRoom использует "publishers" вместо "participants"
+                if (data.TryGetProperty("publishers", out var publishersElement))
+                {
+                    foreach (var p in publishersElement.EnumerateArray())
+                    {
+                        participants.Add(new JanusParticipant
+                        {
+                            Id = p.TryGetProperty("id", out var id) ? id.GetInt64() : 0,
+                            Display = p.TryGetProperty("display", out var display) ? display.GetString() ?? "" : "",
+                            Muted = p.TryGetProperty("muted", out var muted) && muted.GetBoolean()
+                        });
+                    }
+                }
+                // Для обратной совместимости с AudioBridge
+                else if (data.TryGetProperty("participants", out var participantsElement))
                 {
                     foreach (var p in participantsElement.EnumerateArray())
                     {
@@ -296,7 +326,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
         var request = new
         {
             janus = "attach",
-            plugin = "janus.plugin.audiobridge",
+            plugin = "janus.plugin.videoroom",
             transaction = Guid.NewGuid().ToString()
         };
 
@@ -315,109 +345,6 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
         throw new InvalidOperationException("Failed to parse handle ID from Janus response");
     }
 
-    public async Task SetParticipantVolumeAsync(long roomId, long participantId, int volume, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("SetParticipantVolumeAsync called: RoomId={RoomId}, ParticipantId={ParticipantId}, Volume={Volume}", roomId, participantId, volume);
-        
-        try
-        {
-            var sessionId = await CreateSessionAsync(cancellationToken);
-            _logger.LogInformation("Created Janus session: {SessionId}", sessionId);
-            
-            var handleId = await AttachPluginAsync(sessionId, cancellationToken);
-            _logger.LogInformation("Attached to AudioBridge plugin: {HandleId}", handleId);
-
-            var body = new Dictionary<string, object>
-            {
-                { "request", "configure" },
-                { "room", roomId },
-                { "id", participantId },
-                { "volume", volume }
-            };
-
-            if (!string.IsNullOrEmpty(_settings.ApiSecret))
-            {
-                body["secret"] = _settings.ApiSecret;
-                _logger.LogInformation("Using API secret for admin operation");
-            }
-            else
-            {
-                _logger.LogWarning("API secret is not configured - volume change may not work for other participants");
-            }
-
-            var request = new
-            {
-                janus = "message",
-                plugin = "janus.plugin.audiobridge",
-                transaction = Guid.NewGuid().ToString(),
-                body = body
-            };
-
-            var requestJson = JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true });
-            _logger.LogInformation("Janus set volume request:\n{Request}", requestJson);
-
-            var response = await _httpClient.PostAsJsonAsync(
-                $"/janus/{sessionId}/{handleId}",
-                request,
-                cancellationToken
-            );
-
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation("Janus set volume response: {Response}", responseContent);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError("Janus API returned error status {StatusCode}: {Response}", response.StatusCode, responseContent);
-                response.EnsureSuccessStatusCode();
-            }
-
-            var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
-
-            if (result.TryGetProperty("plugindata", out var pluginData) &&
-                pluginData.TryGetProperty("data", out var data))
-            {
-                if (data.TryGetProperty("error_code", out var errorCode) &&
-                    data.TryGetProperty("error", out var error))
-                {
-                    var errorCodeValue = errorCode.GetInt32();
-                    var errorMessage = error.GetString();
-                    _logger.LogError("Janus error: {ErrorMessage} (code: {ErrorCode})", errorMessage, errorCodeValue);
-                    throw new InvalidOperationException($"Janus error: {errorMessage} (code: {errorCodeValue})");
-                }
-
-                if (data.TryGetProperty("configured", out var configured))
-                {
-                    var configuredValue = configured.GetString();
-                    _logger.LogInformation("Janus configure response: configured={Configured}", configuredValue);
-                    
-                    if (configuredValue == "ok")
-                    {
-                        _logger.LogInformation("Successfully set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
-                        return;
-                    }
-                }
-                
-                if (data.TryGetProperty("audiobridge", out var audiobridge))
-                {
-                    var audiobridgeValue = audiobridge.GetString();
-                    _logger.LogInformation("Janus audiobridge response: audiobridge={Audiobridge}", audiobridgeValue);
-                    
-                    if (audiobridgeValue == "event" || audiobridgeValue == "configured")
-                    {
-                        _logger.LogInformation("Successfully set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
-                        return;
-                    }
-                }
-            }
-
-            _logger.LogWarning("Unexpected Janus response structure for set volume. Response: {Response}", responseContent);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to set volume for participant {ParticipantId} in room {RoomId}", participantId, roomId);
-            throw;
-        }
-    }
 
     public void Dispose()
     {

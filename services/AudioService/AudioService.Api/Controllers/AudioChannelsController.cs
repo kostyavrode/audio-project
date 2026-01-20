@@ -233,55 +233,6 @@ public class AudioChannelsController : ControllerBase
         }
     }
 
-    [HttpPost("{id}/participants/{participantId}/volume")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SetParticipantVolume(
-        string id,
-        long participantId,
-        [FromBody] SetParticipantVolumeDto dto,
-        CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("SetParticipantVolume called: ChannelId={ChannelId}, ParticipantId={ParticipantId}, Volume={Volume}", id, participantId, dto?.Volume);
-        
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdClaim))
-        {
-            userIdClaim = User.FindFirstValue("sub");
-        }
-
-        if (string.IsNullOrEmpty(userIdClaim))
-        {
-            _logger.LogWarning("User ID not found in token for SetParticipantVolume");
-            return Unauthorized(new { error = "User ID not found in token" });
-        }
-
-        try
-        {
-            _logger.LogInformation("Calling SetParticipantVolumeAsync: ChannelId={ChannelId}, ParticipantId={ParticipantId}, Volume={Volume}, UserId={UserId}", id, participantId, dto?.Volume, userIdClaim);
-            await _audioChannelService.SetParticipantVolumeAsync(id, participantId, dto.Volume, userIdClaim, cancellationToken);
-            _logger.LogInformation("SetParticipantVolumeAsync completed successfully");
-            return Ok(new { success = true });
-        }
-        catch (AudioChannelNotFoundException ex)
-        {
-            return NotFound(new { error = ex.Message });
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { error = ex.Message });
-        }
-        catch (DomainException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-    }
 
     [HttpPost("{id}/participants/joined")]
     [ProducesResponseType(StatusCodes.Status200OK)]
