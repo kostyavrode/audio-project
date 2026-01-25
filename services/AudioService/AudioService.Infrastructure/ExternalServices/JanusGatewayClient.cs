@@ -34,14 +34,17 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var request = new
             {
                 janus = "message",
-                plugin = "janus.plugin.audiobridge",
+                plugin = "janus.plugin.videoroom",
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
                     request = "create",
                     room = roomId,
                     description = description,
-                    sampling = 16000
+                    publishers = 10, // Максимальное количество publishers
+                    bitrate = 128000,
+                    audiocodec = "opus",
+                    videocodec = "vp8" // Хотя видео не используем, но нужно указать
                 }
             };
 
@@ -59,13 +62,21 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
 
             if (result.TryGetProperty("plugindata", out var pluginData) &&
-                pluginData.TryGetProperty("data", out var data) &&
-                data.TryGetProperty("room", out var roomElement))
+                pluginData.TryGetProperty("data", out var data))
             {
-                if (roomElement.TryGetInt64(out var createdRoomId))
+                // Videoroom возвращает "created" или "exists" в videoroom поле
+                if (data.TryGetProperty("videoroom", out var videoroom) && 
+                    (videoroom.GetString() == "created" || videoroom.GetString() == "exists"))
                 {
-                    _logger.LogInformation("Created Janus room {RoomId} with description {Description}", createdRoomId, description);
-                    return createdRoomId;
+                    // Проверяем room в ответе или используем переданный roomId
+                    if (data.TryGetProperty("room", out var roomElement) && roomElement.TryGetInt64(out var createdRoomId))
+                    {
+                        _logger.LogInformation("Created Janus videoroom {RoomId} with description {Description}", createdRoomId, description);
+                        return createdRoomId;
+                    }
+                    // Если room нет в ответе, используем переданный roomId
+                    _logger.LogInformation("Created/Found Janus videoroom {RoomId} with description {Description}", roomId, description);
+                    return roomId;
                 }
             }
 
@@ -89,7 +100,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var request = new
             {
                 janus = "message",
-                plugin = "janus.plugin.audiobridge",
+                plugin = "janus.plugin.videoroom",
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
@@ -126,11 +137,11 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var request = new
             {
                 janus = "message",
-                plugin = "janus.plugin.audiobridge",
+                plugin = "janus.plugin.videoroom",
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
-                    request = "listparticipants",
+                    request = "list",
                     room = roomId
                 }
             };
@@ -155,9 +166,11 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     var errorCodeValue = errorCode.GetInt32();
                     var errorMessage = error.GetString();
                     
-                    if (errorCodeValue == 485 && errorMessage?.Contains("No such room") == true)
+                    // Videoroom использует другие коды ошибок
+                    if ((errorCodeValue == 485 && errorMessage?.Contains("No such room") == true) ||
+                        (errorCodeValue == 426 && errorMessage?.Contains("No such room") == true))
                     {
-                        _logger.LogWarning("Janus room {RoomId} does not exist", roomId);
+                        _logger.LogWarning("Janus videoroom {RoomId} does not exist", roomId);
                         return null; // Комната не существует
                     }
                     
@@ -166,16 +179,28 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     throw new InvalidOperationException($"Janus error: {errorMessage}");
                 }
 
-                // Если нет ошибки, проверяем наличие participants
-                if (data.TryGetProperty("participants", out var participantsElement))
+                // Videoroom возвращает publishers в списке
+                if (data.TryGetProperty("list", out var listElement) && listElement.ValueKind == JsonValueKind.Array)
                 {
-                    var participants = participantsElement.EnumerateArray().ToList();
+                    var publishers = listElement.EnumerateArray().ToList();
 
                     return new JanusRoomInfo
                     {
                         RoomId = roomId,
-                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
-                        ParticipantsCount = participants.Count
+                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : description,
+                        ParticipantsCount = publishers.Count
+                    };
+                }
+                // Также проверяем publishers напрямую
+                if (data.TryGetProperty("publishers", out var publishersElement) && publishersElement.ValueKind == JsonValueKind.Array)
+                {
+                    var publishers = publishersElement.EnumerateArray().ToList();
+
+                    return new JanusRoomInfo
+                    {
+                        RoomId = roomId,
+                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : description,
+                        ParticipantsCount = publishers.Count
                     };
                 }
             }
@@ -217,11 +242,11 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             var request = new
             {
                 janus = "message",
-                plugin = "janus.plugin.audiobridge",
+                plugin = "janus.plugin.videoroom",
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
-                    request = "listparticipants",
+                    request = "list",
                     room = roomId
                 }
             };
@@ -245,9 +270,20 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     return participants;
                 }
 
-                if (data.TryGetProperty("participants", out var participantsElement))
+                // Videoroom возвращает publishers в списке
+                JsonElement? publishersElement = null;
+                if (data.TryGetProperty("list", out var listElement) && listElement.ValueKind == JsonValueKind.Array)
                 {
-                    foreach (var p in participantsElement.EnumerateArray())
+                    publishersElement = listElement;
+                }
+                else if (data.TryGetProperty("publishers", out var pubElement) && pubElement.ValueKind == JsonValueKind.Array)
+                {
+                    publishersElement = pubElement;
+                }
+
+                if (publishersElement.HasValue)
+                {
+                    foreach (var p in publishersElement.Value.EnumerateArray())
                     {
                         participants.Add(new JanusParticipant
                         {
@@ -296,7 +332,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
         var request = new
         {
             janus = "attach",
-            plugin = "janus.plugin.audiobridge",
+            plugin = "janus.plugin.videoroom",
             transaction = Guid.NewGuid().ToString()
         };
 
@@ -315,58 +351,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
         throw new InvalidOperationException("Failed to parse handle ID from Janus response");
     }
 
-    public async Task SetParticipantVolumeAsync(long roomId, long participantId, int volume, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var sessionId = await CreateSessionAsync(cancellationToken);
-            var handleId = await AttachPluginAsync(sessionId, cancellationToken);
-
-            var request = new
-            {
-                janus = "message",
-                plugin = "janus.plugin.audiobridge",
-                transaction = Guid.NewGuid().ToString(),
-                body = new
-                {
-                    request = "configure",
-                    room = roomId,
-                    id = participantId,
-                    volume = volume
-                }
-            };
-
-            var response = await _httpClient.PostAsJsonAsync(
-                $"/janus/{sessionId}/{handleId}",
-                request,
-                cancellationToken
-            );
-
-            response.EnsureSuccessStatusCode();
-
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
-
-            if (result.TryGetProperty("plugindata", out var pluginData) &&
-                pluginData.TryGetProperty("data", out var data))
-            {
-                if (data.TryGetProperty("error_code", out var errorCode) &&
-                    data.TryGetProperty("error", out var error))
-                {
-                    var errorCodeValue = errorCode.GetInt32();
-                    var errorMessage = error.GetString();
-                    throw new InvalidOperationException($"Janus error: {errorMessage} (code: {errorCodeValue})");
-                }
-            }
-
-            _logger.LogInformation("Set volume {Volume} for participant {ParticipantId} in room {RoomId}", volume, participantId, roomId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to set volume for participant {ParticipantId} in room {RoomId}", participantId, roomId);
-            throw;
-        }
-    }
+    // Удалено: SetParticipantVolumeAsync - громкость теперь управляется на клиенте через Web Audio API
 
     public void Dispose()
     {
