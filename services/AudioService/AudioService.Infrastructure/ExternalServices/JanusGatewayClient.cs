@@ -187,7 +187,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     return new JanusRoomInfo
                     {
                         RoomId = roomId,
-                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : description,
+                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
                         ParticipantsCount = publishers.Count
                     };
                 }
@@ -199,7 +199,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     return new JanusRoomInfo
                     {
                         RoomId = roomId,
-                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : description,
+                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
                         ParticipantsCount = publishers.Count
                     };
                 }
