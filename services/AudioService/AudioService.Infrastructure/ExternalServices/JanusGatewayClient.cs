@@ -183,11 +183,16 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 if (data.TryGetProperty("list", out var listElement) && listElement.ValueKind == JsonValueKind.Array)
                 {
                     var publishers = listElement.EnumerateArray().ToList();
+                    var description = string.Empty;
+                    if (data.TryGetProperty("description", out var descElement))
+                    {
+                        description = descElement.GetString() ?? string.Empty;
+                    }
 
                     return new JanusRoomInfo
                     {
                         RoomId = roomId,
-                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
+                        Description = description,
                         ParticipantsCount = publishers.Count
                     };
                 }
@@ -195,11 +200,16 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 if (data.TryGetProperty("publishers", out var publishersElement) && publishersElement.ValueKind == JsonValueKind.Array)
                 {
                     var publishers = publishersElement.EnumerateArray().ToList();
+                    var description = string.Empty;
+                    if (data.TryGetProperty("description", out var descElement))
+                    {
+                        description = descElement.GetString() ?? string.Empty;
+                    }
 
                     return new JanusRoomInfo
                     {
                         RoomId = roomId,
-                        Description = data.TryGetProperty("description", out var desc) ? desc.GetString() ?? string.Empty : string.Empty,
+                        Description = description,
                         ParticipantsCount = publishers.Count
                     };
                 }
@@ -246,7 +256,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 transaction = Guid.NewGuid().ToString(),
                 body = new
                 {
-                    request = "list",
+                    request = "listparticipants", // Исправлено: list -> listparticipants для получения участников комнаты
                     room = roomId
                 }
             };
@@ -270,9 +280,13 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                     return participants;
                 }
 
-                // Videoroom возвращает publishers в списке
+                // Videoroom listparticipants возвращает участников в поле "participants"
                 JsonElement? publishersElement = null;
-                if (data.TryGetProperty("list", out var listElement) && listElement.ValueKind == JsonValueKind.Array)
+                if (data.TryGetProperty("participants", out var participantsElement) && participantsElement.ValueKind == JsonValueKind.Array)
+                {
+                    publishersElement = participantsElement;
+                }
+                else if (data.TryGetProperty("list", out var listElement) && listElement.ValueKind == JsonValueKind.Array)
                 {
                     publishersElement = listElement;
                 }
