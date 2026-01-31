@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
@@ -115,7 +116,7 @@ app.Run();
 
 // NotificationHub implementation
 [Authorize]
-public class NotificationHub : Microsoft.AspNetCore.SignalR.Hub
+public class NotificationHub : Hub
 {
     private readonly ILogger<NotificationHub> _logger;
 
