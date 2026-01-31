@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -111,17 +113,84 @@ app.MapHub<NotificationHub>("/hubs/notification");
 
 app.Run();
 
-// Placeholder for NotificationHub - needs to be implemented
+// NotificationHub implementation
+[Authorize]
 public class NotificationHub : Microsoft.AspNetCore.SignalR.Hub
 {
+    private readonly ILogger<NotificationHub> _logger;
+
+    public NotificationHub(ILogger<NotificationHub> logger)
+    {
+        _logger = logger;
+    }
+
     public override Task OnConnectedAsync()
     {
+        var userId = GetUserId();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            _logger?.LogInformation("User {UserId} connected to NotificationHub", userId);
+        }
         return base.OnConnectedAsync();
     }
 
     public override Task OnDisconnectedAsync(Exception? exception)
     {
+        var userId = GetUserId();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            _logger?.LogInformation("User {UserId} disconnected from NotificationHub", userId);
+        }
         return base.OnDisconnectedAsync(exception);
+    }
+
+    public async Task JoinGroup(string groupId)
+    {
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            await Clients.Caller.SendAsync("Error", "Group ID is required");
+            return;
+        }
+
+        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+        {
+            await Clients.Caller.SendAsync("Error", "User not authenticated");
+            return;
+        }
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
+        _logger?.LogInformation("User {UserId} joined group {GroupId} in NotificationHub", userId, groupId);
+        
+        await Clients.Caller.SendAsync("JoinedGroup", groupId);
+    }
+
+    public async Task LeaveGroup(string groupId)
+    {
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            await Clients.Caller.SendAsync("Error", "Group ID is required");
+            return;
+        }
+
+        var userId = GetUserId();
+        if (string.IsNullOrEmpty(userId))
+        {
+            await Clients.Caller.SendAsync("Error", "User not authenticated");
+            return;
+        }
+
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
+        _logger?.LogInformation("User {UserId} left group {GroupId} in NotificationHub", userId, groupId);
+        
+        await Clients.Caller.SendAsync("LeftGroup", groupId);
+    }
+
+    private string? GetUserId()
+    {
+        return Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? Context.User?.FindFirst("sub")?.Value
+            ?? Context.User?.FindFirst("userId")?.Value;
     }
 }
 
