@@ -1,0 +1,235 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: audio-postgres-test
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    ports:
+      - "10010:5432"
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - audio-network-test
+
+  rabbitmq-test:
+    image: rabbitmq:3-management-alpine
+    container_name: audio-rabbitmq-test
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_VHOST: /test
+    ports:
+      - "10011:5672"
+      - "10012:15672"
+    volumes:
+      - rabbitmq-test-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - audio-network-test
+
+  janus-test:
+    image: canyan/janus-gateway
+    container_name: audio-janus-test
+    ports:
+      - "10013:8088"
+      - "10014:8188"
+      - "10015:8089"
+      - "10016:8189"
+      - "10017:8009"
+      - "10018:7088"
+      - "10019:7089"
+      - "10020-10030:10000-10010/udp"
+    restart: unless-stopped
+    networks:
+      - audio-network-test
+
+  auth-service-test:
+    build:
+      context: ./services/AuthService
+      dockerfile: AuthService.Api/Dockerfile
+    container_name: audio-auth-service-test
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Test
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres-test;Port=5432;Database=authservicedb_test;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-test-super-secret-key-min-32-characters-long-for-testing-only}
+      - JwtSettings__Issuer=${JWT_ISSUER:-AuthService}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-GroupChatApp}
+      - RabbitMQ__HostName=rabbitmq-test
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - RabbitMQ__VirtualHost=/test
+    ports:
+      - "10001:8080"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - audio-network-test
+
+  groups-service-test:
+    build:
+      context: ./services/GroupsService
+      dockerfile: GroupsService.Api/Dockerfile
+    container_name: audio-groups-service-test
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Test
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres-test;Port=5432;Database=GroupsServiceDb_test;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-test-super-secret-key-min-32-characters-long-for-testing-only}
+      - JwtSettings__Issuer=${JWT_ISSUER:-AuthService}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-GroupChatApp}
+      - RabbitMQ__HostName=rabbitmq-test
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - RabbitMQ__VirtualHost=/test
+    ports:
+      - "10002:8080"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - audio-network-test
+
+  chat-service-test:
+    build:
+      context: ./services/ChatService
+      dockerfile: ChatService.Api/Dockerfile
+    container_name: audio-chat-service-test
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Test
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres-test;Port=5432;Database=ChatServiceDb_test;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-test-super-secret-key-min-32-characters-long-for-testing-only}
+      - JwtSettings__Issuer=${JWT_ISSUER:-AuthService}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-GroupChatApp}
+      - RabbitMQ__HostName=rabbitmq-test
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - RabbitMQ__VirtualHost=/test
+    ports:
+      - "10003:8080"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - audio-network-test
+
+  audio-service-test:
+    build:
+      context: ./services/AudioService
+      dockerfile: AudioService.Api/Dockerfile
+    container_name: audio-audio-service-test
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Test
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres-test;Port=5432;Database=AudioServiceDb_test;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY:-test-super-secret-key-min-32-characters-long-for-testing-only}
+      - JwtSettings__Issuer=${JWT_ISSUER:-AuthService}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-GroupChatApp}
+      - RabbitMQ__HostName=rabbitmq-test
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - RabbitMQ__VirtualHost=/test
+      - JanusGateway__BaseUrl=http://janus-test:8088
+      - JanusGateway__ApiSecret=${JANUS_API_SECRET:-janusoverlord}
+    ports:
+      - "10004:8080"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+      janus-test:
+        condition: service_started
+    restart: unless-stopped
+
+  notification-service-test:
+    build:
+      context: ./services/NotificationService
+      dockerfile: NotificationService.Api/Dockerfile
+    container_name: audio-notification-service-test
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Test
+      - ASPNETCORE_URLS=http://+:8080
+      - JWT_SECRET=${JWT_SECRET_KEY:-test-super-secret-key-min-32-characters-long-for-testing-only}
+      - JWT_ISSUER=${JWT_ISSUER:-AuthService}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-GroupChatApp}
+      - RabbitMQ__HostName=rabbitmq-test
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - RabbitMQ__VirtualHost=/test
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://audio-kostya.online/test,http://localhost:8001,http://localhost:3001,http://127.0.0.1:8001}
+    ports:
+      - "10005:8080"
+    depends_on:
+      rabbitmq-test:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - audio-network-test
+
+  nginx-test:
+    image: nginx:alpine
+    container_name: audio-nginx-test
+    ports:
+      - "10080:80"
+    volumes:
+      - ./nginx/nginx-test.conf:/etc/nginx/nginx.conf:ro
+      - ../site:/var/www/html:ro
+    depends_on:
+      - auth-service-test
+      - groups-service-test
+      - chat-service-test
+      - audio-service-test
+      - notification-service-test
+    restart: unless-stopped
+    networks:
+      - audio-network-test
+
+networks:
+  audio-network-test:
+    driver: bridge
+
+volumes:
+  postgres-test-data:
+  rabbitmq-test-data:
