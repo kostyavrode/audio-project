@@ -53,7 +53,7 @@ services:
       - "10017:8009"
       - "10018:7088"
       - "10019:7089"
-      - "10020-10030:10000-10010/udp"
+      - "10031-10040:10000-10010/udp"
     restart: unless-stopped
     networks:
       - audio-network-test
@@ -208,23 +208,6 @@ services:
     networks:
       - audio-network-test
 
-  nginx-test:
-    image: nginx:alpine
-    container_name: audio-nginx-test
-    ports:
-      - "10080:80"
-    volumes:
-      - ./nginx/nginx-test.conf:/etc/nginx/nginx.conf:ro
-      - ../site:/var/www/html:ro
-    depends_on:
-      - auth-service-test
-      - groups-service-test
-      - chat-service-test
-      - audio-service-test
-      - notification-service-test
-    restart: unless-stopped
-    networks:
-      - audio-network-test
 
 networks:
   audio-network-test:
