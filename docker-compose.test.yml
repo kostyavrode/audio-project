@@ -179,6 +179,8 @@ services:
       janus-test:
         condition: service_started
     restart: unless-stopped
+    networks:
+      - audio-network-test
 
   notification-service-test:
     build:
