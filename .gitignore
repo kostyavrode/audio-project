@@ -6,6 +6,10 @@
 *.user
 *.suo
 *.cache
+*.sh
+*.txt
+*.ps1
+*.md
 
 # Docker
 .dockerignore

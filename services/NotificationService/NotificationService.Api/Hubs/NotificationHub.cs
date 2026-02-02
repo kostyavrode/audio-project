@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Collections.Concurrent;
 
 namespace NotificationService.Api.Hubs;
 
@@ -12,6 +13,9 @@ public class NotificationHub : Hub
     private readonly ILogger<NotificationHub> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
+    
+    // In-memory хранилище активных видео-стримов: channelId -> List<{userId, nickname, videoType, timestamp}>
+    private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, VideoStreamInfo>> _activeVideoStreams = new();
 
     public NotificationHub(
         ILogger<NotificationHub> logger,
@@ -200,4 +204,135 @@ public class NotificationHub : Hub
         }
         return userId;
     }
+    
+    private string? GetUserNickName()
+    {
+        if (Context.User == null) return null;
+
+        var userNickName = Context.User.FindFirst(ClaimTypes.Name)?.Value;
+        if (string.IsNullOrEmpty(userNickName))
+        {
+            userNickName = Context.User.FindFirst("nickname")?.Value;
+        }
+        return userNickName;
+    }
+
+    // Уведомить о начале трансляции видео
+    public async Task StartVideoStream(string groupId, string channelId, string videoType)
+    {
+        var userId = GetUserId();
+        var nickname = GetUserNickName();
+        
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(nickname))
+        {
+            await Clients.Caller.SendAsync("Error", "User not authenticated");
+            return;
+        }
+
+        _logger.LogInformation("User {UserId} ({Nickname}) started {VideoType} stream in channel {ChannelId}", 
+            userId, nickname, videoType, channelId);
+
+        // Добавляем стрим в хранилище
+        var channelStreams = _activeVideoStreams.GetOrAdd(channelId, _ => new ConcurrentDictionary<string, VideoStreamInfo>());
+        channelStreams[userId] = new VideoStreamInfo
+        {
+            UserId = userId,
+            Nickname = nickname,
+            VideoType = videoType,
+            Timestamp = DateTime.UtcNow
+        };
+
+        // Уведомляем всех участников группы
+        await Clients.Group(groupId).SendAsync("VideoStreamStarted", new
+        {
+            channelId,
+            userId,
+            nickname,
+            videoType,
+            timestamp = DateTime.UtcNow
+        });
+    }
+
+    // Уведомить об остановке трансляции видео
+    public async Task StopVideoStream(string groupId, string channelId)
+    {
+        var userId = GetUserId();
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            await Clients.Caller.SendAsync("Error", "User not authenticated");
+            return;
+        }
+
+        _logger.LogInformation("User {UserId} stopped video stream in channel {ChannelId}", userId, channelId);
+
+        // Удаляем стрим из хранилища
+        if (_activeVideoStreams.TryGetValue(channelId, out var channelStreams))
+        {
+            channelStreams.TryRemove(userId, out _);
+            
+            // Если больше нет стримов в канале, удаляем сам канал
+            if (channelStreams.IsEmpty)
+            {
+                _activeVideoStreams.TryRemove(channelId, out _);
+            }
+        }
+
+        // Уведомляем всех участников группы
+        await Clients.Group(groupId).SendAsync("VideoStreamStopped", new
+        {
+            channelId,
+            userId,
+            timestamp = DateTime.UtcNow
+        });
+    }
+
+    // Получить список активных видео-стримов в канале (при подключении)
+    public async Task GetActiveVideoStreams(string channelId)
+    {
+        var userId = GetUserId();
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            await Clients.Caller.SendAsync("Error", "User not authenticated");
+            return;
+        }
+
+        _logger.LogInformation("User {UserId} requested active video streams for channel {ChannelId}", userId, channelId);
+
+        var activeStreams = new List<object>();
+
+        if (_activeVideoStreams.TryGetValue(channelId, out var channelStreams))
+        {
+            foreach (var stream in channelStreams.Values)
+            {
+                // Не отправляем свой собственный стрим
+                if (stream.UserId != userId)
+                {
+                    activeStreams.Add(new
+                    {
+                        userId = stream.UserId,
+                        nickname = stream.Nickname,
+                        videoType = stream.VideoType,
+                        timestamp = stream.Timestamp
+                    });
+                }
+            }
+        }
+
+        await Clients.Caller.SendAsync("ActiveVideoStreams", new
+        {
+            channelId,
+            streams = activeStreams
+        });
+    }
+}
+
+// Класс для хранения информации о видео-стриме
+public class VideoStreamInfo
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Nickname { get; set; } = string.Empty;
+    public string VideoType { get; set; } = string.Empty; // "screen" или "camera"
+    public DateTime Timestamp { get; set; }
 }
