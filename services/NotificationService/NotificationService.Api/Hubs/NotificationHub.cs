@@ -16,6 +16,10 @@ public class NotificationHub : Hub
     
     // In-memory хранилище активных видео-стримов: channelId -> List<{userId, nickname, videoType, timestamp}>
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, VideoStreamInfo>> _activeVideoStreams = new();
+    
+    // Счетчик активных подключений
+    private static int _activeConnectionsCount = 0;
+    private static readonly object _connectionsLock = new object();
 
     public NotificationHub(
         ILogger<NotificationHub> logger,
@@ -36,16 +40,30 @@ public class NotificationHub : Hub
             return;
         }
 
-        _logger.LogInformation("User {UserId} connected to NotificationHub", userId);
+        lock (_connectionsLock)
+        {
+            _activeConnectionsCount++;
+        }
+
+        _logger.LogInformation("User {UserId} connected to NotificationHub (Total: {Count})", userId, _activeConnectionsCount);
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var userId = GetUserId();
+        
+        lock (_connectionsLock)
+        {
+            if (_activeConnectionsCount > 0)
+            {
+                _activeConnectionsCount--;
+            }
+        }
+
         if (!string.IsNullOrEmpty(userId))
         {
-            _logger.LogInformation("User {UserId} disconnected from NotificationHub", userId);
+            _logger.LogInformation("User {UserId} disconnected from NotificationHub (Total: {Count})", userId, _activeConnectionsCount);
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -325,6 +343,15 @@ public class NotificationHub : Hub
             channelId,
             streams = activeStreams
         });
+    }
+
+    // Статический метод для получения количества активных подключений
+    public static int GetActiveConnectionsCount()
+    {
+        lock (_connectionsLock)
+        {
+            return _activeConnectionsCount;
+        }
     }
 }
 
