@@ -14,10 +14,8 @@ public class NotificationHub : Hub
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     
-    // In-memory хранилище активных видео-стримов: channelId -> List<{userId, nickname, videoType, timestamp}>
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, VideoStreamInfo>> _activeVideoStreams = new();
     
-    // Счетчик активных подключений
     private static int _activeConnectionsCount = 0;
     private static readonly object _connectionsLock = new object();
 
@@ -234,8 +232,7 @@ public class NotificationHub : Hub
         }
         return userNickName;
     }
-
-    // Уведомить о начале трансляции видео
+    
     public async Task StartVideoStream(string groupId, string channelId, string videoType)
     {
         var userId = GetUserId();
@@ -249,8 +246,7 @@ public class NotificationHub : Hub
 
         _logger.LogInformation("User {UserId} ({Nickname}) started {VideoType} stream in channel {ChannelId}", 
             userId, nickname, videoType, channelId);
-
-        // Добавляем стрим в хранилище
+        
         var channelStreams = _activeVideoStreams.GetOrAdd(channelId, _ => new ConcurrentDictionary<string, VideoStreamInfo>());
         channelStreams[userId] = new VideoStreamInfo
         {
@@ -259,8 +255,7 @@ public class NotificationHub : Hub
             VideoType = videoType,
             Timestamp = DateTime.UtcNow
         };
-
-        // Уведомляем всех участников группы
+        
         await Clients.Group(groupId).SendAsync("VideoStreamStarted", new
         {
             channelId,
@@ -270,8 +265,7 @@ public class NotificationHub : Hub
             timestamp = DateTime.UtcNow
         });
     }
-
-    // Уведомить об остановке трансляции видео
+    
     public async Task StopVideoStream(string groupId, string channelId)
     {
         var userId = GetUserId();
@@ -283,20 +277,17 @@ public class NotificationHub : Hub
         }
 
         _logger.LogInformation("User {UserId} stopped video stream in channel {ChannelId}", userId, channelId);
-
-        // Удаляем стрим из хранилища
+        
         if (_activeVideoStreams.TryGetValue(channelId, out var channelStreams))
         {
             channelStreams.TryRemove(userId, out _);
             
-            // Если больше нет стримов в канале, удаляем сам канал
             if (channelStreams.IsEmpty)
             {
                 _activeVideoStreams.TryRemove(channelId, out _);
             }
         }
-
-        // Уведомляем всех участников группы
+        
         await Clients.Group(groupId).SendAsync("VideoStreamStopped", new
         {
             channelId,
@@ -304,8 +295,7 @@ public class NotificationHub : Hub
             timestamp = DateTime.UtcNow
         });
     }
-
-    // Получить список активных видео-стримов в канале (при подключении)
+    
     public async Task GetActiveVideoStreams(string channelId)
     {
         var userId = GetUserId();
@@ -324,7 +314,6 @@ public class NotificationHub : Hub
         {
             foreach (var stream in channelStreams.Values)
             {
-                // Не отправляем свой собственный стрим
                 if (stream.UserId != userId)
                 {
                     activeStreams.Add(new
@@ -344,22 +333,23 @@ public class NotificationHub : Hub
             streams = activeStreams
         });
     }
-
-    // Статический метод для получения количества активных подключений
+    
     public static int GetActiveConnectionsCount()
     {
         lock (_connectionsLock)
         {
-            return _activeConnectionsCount;
+            // Логируем для отладки
+            var count = _activeConnectionsCount;
+            // Используем статический logger через сервис или просто возвращаем значение
+            return count;
         }
     }
 }
 
-// Класс для хранения информации о видео-стриме
 public class VideoStreamInfo
 {
     public string UserId { get; set; } = string.Empty;
     public string Nickname { get; set; } = string.Empty;
-    public string VideoType { get; set; } = string.Empty; // "screen" или "camera"
+    public string VideoType { get; set; } = string.Empty;
     public DateTime Timestamp { get; set; }
 }

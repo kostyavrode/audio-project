@@ -15,10 +15,10 @@ public class AdminController : ControllerBase
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
-        IHubContext<NotificationHub> hubContext,
+        IHubContext<NotificationHub> hubContext, 
         ILogger<AdminController> logger)
     {
-        _hubContext = hubContext;
+        _hubContext = hubContext; 
         _logger = logger;
     }
 
@@ -28,7 +28,6 @@ public class AdminController : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public ActionResult<AdminStatsDto> GetStats()
     {
-        // Проверка доступа - только для администратора (kiberkostya)
         var nickname = User.FindFirstValue("nickname");
         if (string.IsNullOrEmpty(nickname) || !nickname.Equals("kiberkostya", StringComparison.OrdinalIgnoreCase))
         {
@@ -38,8 +37,9 @@ public class AdminController : ControllerBase
 
         try
         {
-            // Получаем количество активных подключений из Hub
             var activeConnections = NotificationHub.GetActiveConnectionsCount();
+            
+            _logger.LogInformation("GetActiveConnectionsCount() returned: {Count}", activeConnections);
             
             var stats = new AdminStatsDto
             {
@@ -47,7 +47,7 @@ public class AdminController : ControllerBase
                 Timestamp = DateTime.UtcNow
             };
 
-            _logger.LogInformation("Admin stats requested by {Nickname}: {Connections} active connections", nickname, activeConnections);
+            _logger.LogInformation("Admin stats requested by {Nickname}: {Connections} active SignalR connections", nickname, activeConnections);
             return Ok(stats);
         }
         catch (Exception ex)

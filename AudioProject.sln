@@ -45,6 +45,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioService.Infrastructure
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioService.Api", "services\AudioService\AudioService.Api\AudioService.Api.csproj", "{7D5AF2B9-E6B0-47B2-BD8B-1623D519C1A6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Api", "services\NotificationService\NotificationService.Api\NotificationService.Api.csproj", "{FEBBF9B7-1169-403E-996C-A863CFC59B26}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Application", "services\NotificationService\NotificationService.Application\NotificationService.Application.csproj", "{D88A08F2-F654-42A7-8AD8-EB62DB9602AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Domain", "services\NotificationService\NotificationService.Domain\NotificationService.Domain.csproj", "{E1F55145-7934-4E66-93C1-2D22B95E1ADA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService.Infrastructure", "services\NotificationService\NotificationService.Infrastructure\NotificationService.Infrastructure.csproj", "{8DD4CFEC-8A12-4D25-850A-FB52533E8481}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -118,6 +126,22 @@ Global
 		{7D5AF2B9-E6B0-47B2-BD8B-1623D519C1A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D5AF2B9-E6B0-47B2-BD8B-1623D519C1A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D5AF2B9-E6B0-47B2-BD8B-1623D519C1A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEBBF9B7-1169-403E-996C-A863CFC59B26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEBBF9B7-1169-403E-996C-A863CFC59B26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEBBF9B7-1169-403E-996C-A863CFC59B26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEBBF9B7-1169-403E-996C-A863CFC59B26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D88A08F2-F654-42A7-8AD8-EB62DB9602AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D88A08F2-F654-42A7-8AD8-EB62DB9602AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D88A08F2-F654-42A7-8AD8-EB62DB9602AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D88A08F2-F654-42A7-8AD8-EB62DB9602AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1F55145-7934-4E66-93C1-2D22B95E1ADA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1F55145-7934-4E66-93C1-2D22B95E1ADA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1F55145-7934-4E66-93C1-2D22B95E1ADA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1F55145-7934-4E66-93C1-2D22B95E1ADA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DD4CFEC-8A12-4D25-850A-FB52533E8481}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DD4CFEC-8A12-4D25-850A-FB52533E8481}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DD4CFEC-8A12-4D25-850A-FB52533E8481}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DD4CFEC-8A12-4D25-850A-FB52533E8481}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{523DC4FF-5BB1-4303-BD15-10D4A4A8A400} = {CC09AF14-D52A-4F27-8D71-A4F8388E9BE7}
@@ -140,5 +164,9 @@ Global
 		{5C347346-B3F4-4FB3-8189-222FF7C7A6B4} = {CF787010-5A94-4692-8918-F49AFA3439AF}
 		{CB9FDA92-5CB5-46B9-8330-779F99D9C6E4} = {CF787010-5A94-4692-8918-F49AFA3439AF}
 		{7D5AF2B9-E6B0-47B2-BD8B-1623D519C1A6} = {CF787010-5A94-4692-8918-F49AFA3439AF}
+		{FEBBF9B7-1169-403E-996C-A863CFC59B26} = {CC09AF14-D52A-4F27-8D71-A4F8388E9BE7}
+		{D88A08F2-F654-42A7-8AD8-EB62DB9602AA} = {CC09AF14-D52A-4F27-8D71-A4F8388E9BE7}
+		{E1F55145-7934-4E66-93C1-2D22B95E1ADA} = {CC09AF14-D52A-4F27-8D71-A4F8388E9BE7}
+		{8DD4CFEC-8A12-4D25-850A-FB52533E8481} = {CC09AF14-D52A-4F27-8D71-A4F8388E9BE7}
 	EndGlobalSection
 EndGlobal
