@@ -54,43 +54,42 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            string? token = null;
-            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(authHeader))
-            {
-                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                {
-                    token = authHeader.Substring("Bearer ".Length).Trim();
-                }
-                else
-                {
-                    var parts = authHeader.Split(" ");
-                    if (parts.Length > 1)
-                    {
-                        token = parts.Last();
-                    }
-                    else if (parts.Length == 1)
-                    {
-                        token = parts[0];
-                    }
-                }
-            }
-            
+            string? token = context.Request.Cookies["access_token"];
+
             if (string.IsNullOrEmpty(token))
             {
-                token = context.Request.Cookies["access_token"];
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(authHeader))
+                {
+                    if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        token = authHeader.Substring("Bearer ".Length).Trim();
+                    }
+                    else
+                    {
+                        var parts = authHeader.Split(" ");
+                        if (parts.Length > 1)
+                        {
+                            token = parts.Last();
+                        }
+                        else if (parts.Length == 1)
+                        {
+                            token = parts[0];
+                        }
+                    }
+                }
             }
-            
+
             if (string.IsNullOrEmpty(token) && context.Request.Path.StartsWithSegments("/hubs"))
             {
                 token = context.Request.Query["access_token"];
             }
-            
+
             if (!string.IsNullOrEmpty(token))
             {
                 context.Token = token;
             }
-            
+
             return Task.CompletedTask;
         }
     };

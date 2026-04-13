@@ -60,20 +60,18 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-            string? token = null;
-
-            if (!string.IsNullOrEmpty(authHeader))
-            {
-                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                {
-                    token = authHeader.Substring("Bearer ".Length).Trim();
-                }
-            }
+            // Сначала cookie: после /Auth/refresh сервер обновляет HttpOnly access_token,
+            // а клиент может ещё слать старый Bearer из JS — иначе валидная cookie игнорируется.
+            string? token = context.Request.Cookies["access_token"];
 
             if (string.IsNullOrEmpty(token))
             {
-                token = context.Request.Cookies["access_token"];
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(authHeader) &&
+                    authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    token = authHeader.Substring("Bearer ".Length).Trim();
+                }
             }
 
             if (!string.IsNullOrEmpty(token))

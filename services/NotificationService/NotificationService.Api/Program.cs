@@ -38,47 +38,42 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnMessageReceived = context =>
             {
-                string? token = null;
-                
-                // Пробуем получить токен из Authorization header
-                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-                if (!string.IsNullOrEmpty(authHeader))
-                {
-                    if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                    {
-                        token = authHeader.Substring("Bearer ".Length).Trim();
-                    }
-                    else
-                    {
-                        var parts = authHeader.Split(" ");
-                        if (parts.Length > 1)
-                        {
-                            token = parts.Last();
-                        }
-                        else if (parts.Length == 1)
-                        {
-                            token = parts[0];
-                        }
-                    }
-                }
-                
-                // Пробуем получить токен из cookies
+                string? token = context.Request.Cookies["access_token"];
+
                 if (string.IsNullOrEmpty(token))
                 {
-                    token = context.Request.Cookies["access_token"];
+                    var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                    if (!string.IsNullOrEmpty(authHeader))
+                    {
+                        if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            token = authHeader.Substring("Bearer ".Length).Trim();
+                        }
+                        else
+                        {
+                            var parts = authHeader.Split(" ");
+                            if (parts.Length > 1)
+                            {
+                                token = parts.Last();
+                            }
+                            else if (parts.Length == 1)
+                            {
+                                token = parts[0];
+                            }
+                        }
+                    }
                 }
-                
-                // Пробуем получить токен из query string (для SignalR)
+
                 if (string.IsNullOrEmpty(token) && context.Request.Path.StartsWithSegments("/hubs/notification"))
                 {
                     token = context.Request.Query["access_token"];
                 }
-                
+
                 if (!string.IsNullOrEmpty(token))
                 {
                     context.Token = token;
                 }
-                
+
                 return Task.CompletedTask;
             }
         };

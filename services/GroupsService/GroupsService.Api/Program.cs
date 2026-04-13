@@ -58,18 +58,27 @@ builder.Services.AddAuthentication(options =>
     {
         OnMessageReceived = context =>
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            
+            string? token = context.Request.Cookies["access_token"];
+
             if (string.IsNullOrEmpty(token))
             {
-                token = context.Request.Cookies["access_token"];
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(authHeader) &&
+                    authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    token = authHeader.Substring("Bearer ".Length).Trim();
+                }
+                else if (!string.IsNullOrEmpty(authHeader))
+                {
+                    token = authHeader.Split(" ").LastOrDefault();
+                }
             }
-            
+
             if (!string.IsNullOrEmpty(token))
             {
                 context.Token = token;
             }
-            
+
             return Task.CompletedTask;
         }
     };
