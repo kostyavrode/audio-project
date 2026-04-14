@@ -53,8 +53,8 @@ services:
 
   auth-service:
     build:
-      context: ./services/AuthService
-      dockerfile: AuthService.Api/Dockerfile
+      context: .
+      dockerfile: services/AuthService/AuthService.Api/Dockerfile
     container_name: audio-auth-service
     env_file:
       - .env
@@ -83,8 +83,8 @@ services:
 
   groups-service:
     build:
-      context: ./services/GroupsService
-      dockerfile: GroupsService.Api/Dockerfile
+      context: .
+      dockerfile: services/GroupsService/GroupsService.Api/Dockerfile
     container_name: audio-groups-service
     env_file:
       - .env
@@ -110,8 +110,8 @@ services:
 
   chat-service:
     build:
-      context: ./services/ChatService
-      dockerfile: ChatService.Api/Dockerfile
+      context: .
+      dockerfile: services/ChatService/ChatService.Api/Dockerfile
     container_name: audio-chat-service
     env_file:
       - .env
@@ -137,8 +137,8 @@ services:
 
   audio-service:
     build:
-      context: ./services/AudioService
-      dockerfile: AudioService.Api/Dockerfile
+      context: .
+      dockerfile: services/AudioService/AudioService.Api/Dockerfile
     container_name: audio-audio-service
     env_file:
       - .env
@@ -168,8 +168,8 @@ services:
 
   notification-service:
     build:
-      context: ./services/NotificationService
-      dockerfile: NotificationService.Api/Dockerfile
+      context: .
+      dockerfile: services/NotificationService/NotificationService.Api/Dockerfile
     container_name: audio-notification-service
     env_file:
       - .env

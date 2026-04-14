@@ -4,16 +4,19 @@ EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["AuthService.Api/AuthService.Api.csproj", "AuthService.Api/"]
-COPY ["AuthService.Application/AuthService.Application.csproj", "AuthService.Application/"]
-COPY ["AuthService.Domain/AuthService.Domain.csproj", "AuthService.Domain/"]
-COPY ["AuthService.Infrastructure/AuthService.Infrastructure.csproj", "AuthService.Infrastructure/"]
-RUN dotnet restore "AuthService.Api/AuthService.Api.csproj"
-COPY . .
-WORKDIR "/src/AuthService.Api"
+COPY ["shared/Common.Monitoring/Common.Monitoring.csproj", "shared/Common.Monitoring/"]
+COPY ["services/AuthService/AuthService.Api/AuthService.Api.csproj", "services/AuthService/AuthService.Api/"]
+COPY ["services/AuthService/AuthService.Application/AuthService.Application.csproj", "services/AuthService/AuthService.Application/"]
+COPY ["services/AuthService/AuthService.Domain/AuthService.Domain.csproj", "services/AuthService/AuthService.Domain/"]
+COPY ["services/AuthService/AuthService.Infrastructure/AuthService.Infrastructure.csproj", "services/AuthService/AuthService.Infrastructure/"]
+RUN dotnet restore "services/AuthService/AuthService.Api/AuthService.Api.csproj"
+COPY ["shared/Common.Monitoring/", "shared/Common.Monitoring/"]
+COPY ["services/AuthService/", "services/AuthService/"]
+WORKDIR "/src/services/AuthService/AuthService.Api"
 RUN dotnet build "AuthService.Api.csproj" -c Release -o /app/build
 
 FROM build AS publish
+WORKDIR "/src/services/AuthService/AuthService.Api"
 RUN dotnet publish "AuthService.Api.csproj" -c Release -o /app/publish
 
 FROM base AS final
