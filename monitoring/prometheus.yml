@@ -1,5 +1,6 @@
 global:
   scrape_interval: 15s
+  evaluation_interval: 15s
 
 scrape_configs:
   - job_name: prometheus
@@ -9,10 +10,13 @@ scrape_configs:
   - job_name: node
     static_configs:
       - targets: ["node_exporter:9100"]
+        labels:
+          instance: "main-server"
 
-  # Внутренние имена и порт 8080 — как у вас в контейнерах
+  # ASP.NET сервисы с дополнительными настройками
   - job_name: aspnet
     metrics_path: /metrics
+    scheme: http
     static_configs:
       - targets:
           - auth-service:8080
@@ -20,3 +24,16 @@ scrape_configs:
           - chat-service:8080
           - audio-service:8080
           - notification-service:8080
+        labels:
+          env: "production"
+          framework: "aspnet"
+    # Переопределяем labels для каждого сервиса
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '(.+):\d+'
+        replacement: '$1'
+      - source_labels: [__address__]
+        target_label: service
+        regex: '(.+):\d+'
+        replacement: '$1'
