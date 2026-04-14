@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: node
+    static_configs:
+      - targets: ["node_exporter:9100"]
+
+  # Внутренние имена и порт 8080 — как у вас в контейнерах
+  - job_name: aspnet
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - auth-service:8080
+          - groups-service:8080
+          - chat-service:8080
+          - audio-service:8080
+          - notification-service:8080
