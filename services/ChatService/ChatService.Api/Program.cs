@@ -7,6 +7,7 @@ using ChatService.Application.Services;
 using ChatService.Application.Validators;
 using ChatService.Api.Hubs;
 using ChatService.Api.Middleware;
+using Common.Monitoring;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -117,6 +118,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<SendMessageDtoValidator>();
 
 builder.Services.AddSignalR();
 
+builder.Services.AddDotNetRuntimeMetrics();
+builder.Services.AddSignalRPresenceMetrics();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -151,6 +155,8 @@ catch (Exception ex)
     logger.LogError(ex, "An error occurred while migrating the database.");
 }
 
+app.UseRouting();
+app.UsePrometheusHttpMetrics("chat-service");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();
@@ -161,5 +167,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
+app.MapPrometheusScrapeEndpoint();
 
 app.Run();

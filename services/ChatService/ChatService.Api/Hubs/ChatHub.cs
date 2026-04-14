@@ -1,3 +1,4 @@
+using Common.Monitoring;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
@@ -16,17 +17,20 @@ public class ChatHub : Hub
     private readonly IMessageService _messageService;
     private readonly IGroupMemberRepository _groupMemberRepository;
     private readonly IRabbitMQPublisher _rabbitMQPublisher;
+    private readonly SignalRPresenceMetrics _presenceMetrics;
     private readonly ILogger<ChatHub> _logger;
 
     public ChatHub(
         IMessageService messageService,
         IGroupMemberRepository groupMemberRepository,
         IRabbitMQPublisher rabbitMQPublisher,
+        SignalRPresenceMetrics presenceMetrics,
         ILogger<ChatHub> logger)
     {
         _messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
         _groupMemberRepository = groupMemberRepository ?? throw new ArgumentNullException(nameof(groupMemberRepository));
         _rabbitMQPublisher = rabbitMQPublisher ?? throw new ArgumentNullException(nameof(rabbitMQPublisher));
+        _presenceMetrics = presenceMetrics ?? throw new ArgumentNullException(nameof(presenceMetrics));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -39,6 +43,7 @@ public class ChatHub : Hub
             return;
         }
 
+        _presenceMetrics.OnConnected(HubMetricNames.Chat, userId);
         _logger.LogInformation("User {UserId} connected to ChatHub", userId);
         await base.OnConnectedAsync();
     }
@@ -48,6 +53,7 @@ public class ChatHub : Hub
         var userId = GetUserId();
         if (!string.IsNullOrEmpty(userId))
         {
+            _presenceMetrics.OnDisconnected(HubMetricNames.Chat, userId);
             _logger.LogInformation("User {UserId} disconnected from ChatHub", userId);
         }
 

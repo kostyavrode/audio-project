@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AudioService.Application\AudioService.Application.csproj" />
     <ProjectReference Include="..\AudioService.Infrastructure\AudioService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\shared\Common.Monitoring\Common.Monitoring.csproj" />
   </ItemGroup>
 
 </Project>

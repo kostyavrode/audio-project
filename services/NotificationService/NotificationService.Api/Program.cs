@@ -6,6 +6,7 @@ using NotificationService.Application.Services;
 using NotificationService.Infrastructure.Messaging;
 using System.Text;
 using Microsoft.AspNetCore.SignalR;
+using Common.Monitoring;
 using NotificationServiceClass = NotificationService.Api.Services.NotificationService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -84,6 +85,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
+builder.Services.AddDotNetRuntimeMetrics();
+builder.Services.AddSignalRPresenceMetrics();
+
 builder.Services.AddScoped<INotificationService, NotificationServiceClass>();
 
 builder.Services.Configure<RabbitMQSettings>(builder.Configuration.GetSection(RabbitMQSettings.SectionName));
@@ -106,6 +110,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseRouting();
+app.UsePrometheusHttpMetrics("notification-service");
+
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
@@ -113,5 +120,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notification");
+app.MapPrometheusScrapeEndpoint();
 
 app.Run();

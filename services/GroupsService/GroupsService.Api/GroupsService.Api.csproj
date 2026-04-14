@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GroupsService.Application\GroupsService.Application.csproj" />
     <ProjectReference Include="..\GroupsService.Infrastructure\GroupsService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\shared\Common.Monitoring\Common.Monitoring.csproj" />
   </ItemGroup>
 
 </Project>

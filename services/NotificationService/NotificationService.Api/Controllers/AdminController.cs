@@ -1,7 +1,6 @@
+using Common.Monitoring;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using NotificationService.Api.Hubs;
 using System.Security.Claims;
 
 namespace NotificationService.Api.Controllers;
@@ -11,14 +10,14 @@ namespace NotificationService.Api.Controllers;
 [Authorize]
 public class AdminController : ControllerBase
 {
-    private readonly IHubContext<NotificationHub> _hubContext;
+    private readonly SignalRPresenceMetrics _presenceMetrics;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
-        IHubContext<NotificationHub> hubContext, 
+        SignalRPresenceMetrics presenceMetrics,
         ILogger<AdminController> logger)
     {
-        _hubContext = hubContext; 
+        _presenceMetrics = presenceMetrics;
         _logger = logger;
     }
 
@@ -37,17 +36,23 @@ public class AdminController : ControllerBase
 
         try
         {
-            var activeConnections = NotificationHub.GetActiveConnectionsCount();
-            
-            _logger.LogInformation("GetActiveConnectionsCount() returned: {Count}", activeConnections);
-            
+            var hub = HubMetricNames.Notification;
+            var activeConnections = _presenceMetrics.GetOpenConnections(hub);
+            var distinctUsers = _presenceMetrics.GetDistinctUsers(hub);
+
+            _logger.LogInformation(
+                "Notification hub presence: {Connections} connections, {DistinctUsers} distinct users",
+                activeConnections, distinctUsers);
+
             var stats = new AdminStatsDto
             {
                 TotalConnections = activeConnections,
+                DistinctUsersOnline = distinctUsers,
                 Timestamp = DateTime.UtcNow
             };
 
-            _logger.LogInformation("Admin stats requested by {Nickname}: {Connections} active SignalR connections", nickname, activeConnections);
+            _logger.LogInformation("Admin stats requested by {Nickname}: {Connections} connections, {Distinct} distinct users",
+                nickname, activeConnections, distinctUsers);
             return Ok(stats);
         }
         catch (Exception ex)
@@ -61,5 +66,6 @@ public class AdminController : ControllerBase
 public class AdminStatsDto
 {
     public int TotalConnections { get; set; }
+    public int DistinctUsersOnline { get; set; }
     public DateTime Timestamp { get; set; }
 }

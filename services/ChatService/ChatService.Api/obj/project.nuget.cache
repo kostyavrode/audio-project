@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "Qud/8osTVu0=",
+  "dgSpecHash": "hckJZAmT42E=",
   "success": true,
   "projectFilePath": "E:\\audio-kostya\\audio-project\\services\\ChatService\\ChatService.Api\\ChatService.Api.csproj",
   "expectedPackageFiles": [
@@ -70,6 +70,8 @@
     "C:\\Users\\inblo\\.nuget\\packages\\npgsql\\8.0.0\\npgsql.8.0.0.nupkg.sha512",
     "C:\\Users\\inblo\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\8.0.0\\npgsql.entityframeworkcore.postgresql.8.0.0.nupkg.sha512",
     "C:\\Users\\inblo\\.nuget\\packages\\prometheus-net\\8.2.1\\prometheus-net.8.2.1.nupkg.sha512",
+    "C:\\Users\\inblo\\.nuget\\packages\\prometheus-net.aspnetcore\\8.2.1\\prometheus-net.aspnetcore.8.2.1.nupkg.sha512",
+    "C:\\Users\\inblo\\.nuget\\packages\\prometheus-net.dotnetruntime\\4.4.1\\prometheus-net.dotnetruntime.4.4.1.nupkg.sha512",
     "C:\\Users\\inblo\\.nuget\\packages\\rabbitmq.client\\6.8.1\\rabbitmq.client.6.8.1.nupkg.sha512",
     "C:\\Users\\inblo\\.nuget\\packages\\swashbuckle.aspnetcore\\10.1.0\\swashbuckle.aspnetcore.10.1.0.nupkg.sha512",
     "C:\\Users\\inblo\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\10.1.0\\swashbuckle.aspnetcore.swagger.10.1.0.nupkg.sha512",

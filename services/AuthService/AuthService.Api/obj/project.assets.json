@@ -1322,6 +1322,42 @@
           }
         }
       },
+      "prometheus-net.AspNetCore/8.2.1": {
+        "type": "package",
+        "dependencies": {
+          "prometheus-net": "8.2.1"
+        },
+        "compile": {
+          "lib/net6.0/Prometheus.AspNetCore.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/Prometheus.AspNetCore.dll": {
+            "related": ".xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
+      "prometheus-net.DotNetRuntime/4.4.1": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection": "3.0.0",
+          "prometheus-net": "3.1.2"
+        },
+        "compile": {
+          "lib/net6.0/prometheus-net.DotNetRuntime.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/prometheus-net.DotNetRuntime.dll": {
+            "related": ".pdb;.xml"
+          }
+        }
+      },
       "RabbitMQ.Client/6.8.1": {
         "type": "package",
         "dependencies": {
@@ -1796,8 +1832,7 @@
           "AuthService.Domain": "1.0.0",
           "FluentValidation": "12.1.1",
           "FluentValidation.DependencyInjectionExtensions": "12.1.1",
-          "Microsoft.AspNetCore.Identity": "2.3.9",
-          "prometheus-net": "8.2.1"
+          "Microsoft.AspNetCore.Identity": "2.3.9"
         },
         "compile": {
           "bin/placeholder/AuthService.Application.dll": {}
@@ -1810,8 +1845,7 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
-          "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "8.0.0",
-          "prometheus-net": "8.2.1"
+          "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "8.0.0"
         },
         "compile": {
           "bin/placeholder/AuthService.Domain.dll": {}
@@ -1832,8 +1866,7 @@
           "Microsoft.Extensions.Options": "8.0.2",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "8.0.0",
           "RabbitMQ.Client": "6.8.1",
-          "System.IdentityModel.Tokens.Jwt": "8.15.0",
-          "prometheus-net": "8.2.1"
+          "System.IdentityModel.Tokens.Jwt": "8.15.0"
         },
         "compile": {
           "bin/placeholder/AuthService.Infrastructure.dll": {}
@@ -1841,6 +1874,23 @@
         "runtime": {
           "bin/placeholder/AuthService.Infrastructure.dll": {}
         }
+      },
+      "Common.Monitoring/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "prometheus-net.AspNetCore": "8.2.1",
+          "prometheus-net.DotNetRuntime": "4.4.1"
+        },
+        "compile": {
+          "bin/placeholder/Common.Monitoring.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Common.Monitoring.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },
@@ -3620,6 +3670,44 @@
         "prometheus-net.nuspec"
       ]
     },
+    "prometheus-net.AspNetCore/8.2.1": {
+      "sha512": "/4TfTvbwIDqpaKTiWvEsjUywiHYF9zZvGZF5sK15avoDsUO/WPQbKsF8TiMaesuphdFQPK2z52P0zk6j26V0rQ==",
+      "type": "package",
+      "path": "prometheus-net.aspnetcore/8.2.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net6.0/Prometheus.AspNetCore.dll",
+        "lib/net6.0/Prometheus.AspNetCore.xml",
+        "prometheus-net-logo.png",
+        "prometheus-net.aspnetcore.8.2.1.nupkg.sha512",
+        "prometheus-net.aspnetcore.nuspec"
+      ]
+    },
+    "prometheus-net.DotNetRuntime/4.4.1": {
+      "sha512": "TGVjy3qhl4Gb6x2aJeZIk/e5bM98YnDGBn1uUxFNdw9268VDUTVpI62lt9162BM/ZH8B9hmaTtgbWZN8wqwDPg==",
+      "type": "package",
+      "path": "prometheus-net.dotnetruntime/4.4.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net5.0/prometheus-net.DotNetRuntime.dll",
+        "lib/net5.0/prometheus-net.DotNetRuntime.pdb",
+        "lib/net5.0/prometheus-net.DotNetRuntime.xml",
+        "lib/net6.0/prometheus-net.DotNetRuntime.dll",
+        "lib/net6.0/prometheus-net.DotNetRuntime.pdb",
+        "lib/net6.0/prometheus-net.DotNetRuntime.xml",
+        "lib/netcoreapp3.1/prometheus-net.DotNetRuntime.dll",
+        "lib/netcoreapp3.1/prometheus-net.DotNetRuntime.pdb",
+        "lib/netcoreapp3.1/prometheus-net.DotNetRuntime.xml",
+        "lib/netstandard2.1/prometheus-net.DotNetRuntime.dll",
+        "lib/netstandard2.1/prometheus-net.DotNetRuntime.pdb",
+        "lib/netstandard2.1/prometheus-net.DotNetRuntime.xml",
+        "prometheus-net.dotnetruntime.4.4.1.nupkg.sha512",
+        "prometheus-net.dotnetruntime.nuspec"
+      ]
+    },
     "RabbitMQ.Client/6.8.1": {
       "sha512": "jNsmGgmCNw2S/NzskeN2ijtGywtH4Sk/G6jWUTD5sY9SrC27Xz6BsLIiB8hdsfjeyWCa4j4GvCIGkpE8wrjU1Q==",
       "type": "package",
@@ -4385,17 +4473,22 @@
       "type": "project",
       "path": "../AuthService.Infrastructure/AuthService.Infrastructure.csproj",
       "msbuildProject": "../AuthService.Infrastructure/AuthService.Infrastructure.csproj"
+    },
+    "Common.Monitoring/1.0.0": {
+      "type": "project",
+      "path": "../../../shared/Common.Monitoring/Common.Monitoring.csproj",
+      "msbuildProject": "../../../shared/Common.Monitoring/Common.Monitoring.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net8.0": [
       "AuthService.Application >= 1.0.0",
       "AuthService.Infrastructure >= 1.0.0",
+      "Common.Monitoring >= 1.0.0",
       "FluentValidation.AspNetCore >= 11.3.1",
       "Microsoft.AspNetCore.OpenApi >= 8.0.11",
       "Microsoft.EntityFrameworkCore.Design >= 8.0.0",
-      "Swashbuckle.AspNetCore >= 10.1.0",
-      "prometheus-net >= 8.2.1"
+      "Swashbuckle.AspNetCore >= 10.1.0"
     ]
   },
   "packageFolders": {
@@ -4436,6 +4529,9 @@
             },
             "E:\\audio-kostya\\audio-project\\services\\AuthService\\AuthService.Infrastructure\\AuthService.Infrastructure.csproj": {
               "projectPath": "E:\\audio-kostya\\audio-project\\services\\AuthService\\AuthService.Infrastructure\\AuthService.Infrastructure.csproj"
+            },
+            "E:\\audio-kostya\\audio-project\\shared\\Common.Monitoring\\Common.Monitoring.csproj": {
+              "projectPath": "E:\\audio-kostya\\audio-project\\shared\\Common.Monitoring\\Common.Monitoring.csproj"
             }
           }
         }
@@ -4473,10 +4569,6 @@
           "Swashbuckle.AspNetCore": {
             "target": "Package",
             "version": "[10.1.0, )"
-          },
-          "prometheus-net": {
-            "target": "Package",
-            "version": "[8.2.1, )"
           }
         },
         "imports": [

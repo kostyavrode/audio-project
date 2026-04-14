@@ -1,3 +1,4 @@
+using Common.Monitoring;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
@@ -13,20 +14,20 @@ public class NotificationHub : Hub
     private readonly ILogger<NotificationHub> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
+    private readonly SignalRPresenceMetrics _presenceMetrics;
     
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, VideoStreamInfo>> _activeVideoStreams = new();
-    
-    private static int _activeConnectionsCount = 0;
-    private static readonly object _connectionsLock = new object();
 
     public NotificationHub(
         ILogger<NotificationHub> logger,
         IHttpClientFactory httpClientFactory,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        SignalRPresenceMetrics presenceMetrics)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
+        _presenceMetrics = presenceMetrics;
     }
 
     public override async Task OnConnectedAsync()
@@ -38,30 +39,22 @@ public class NotificationHub : Hub
             return;
         }
 
-        lock (_connectionsLock)
-        {
-            _activeConnectionsCount++;
-        }
+        _presenceMetrics.OnConnected(HubMetricNames.Notification, userId);
 
-        _logger.LogInformation("User {UserId} connected to NotificationHub (Total: {Count})", userId, _activeConnectionsCount);
+        _logger.LogInformation("User {UserId} connected to NotificationHub (Open connections: {Count})", userId,
+            _presenceMetrics.GetOpenConnections(HubMetricNames.Notification));
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var userId = GetUserId();
-        
-        lock (_connectionsLock)
-        {
-            if (_activeConnectionsCount > 0)
-            {
-                _activeConnectionsCount--;
-            }
-        }
 
         if (!string.IsNullOrEmpty(userId))
         {
-            _logger.LogInformation("User {UserId} disconnected from NotificationHub (Total: {Count})", userId, _activeConnectionsCount);
+            _presenceMetrics.OnDisconnected(HubMetricNames.Notification, userId);
+            _logger.LogInformation("User {UserId} disconnected from NotificationHub (Open connections: {Count})", userId,
+                _presenceMetrics.GetOpenConnections(HubMetricNames.Notification));
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -332,17 +325,6 @@ public class NotificationHub : Hub
             channelId,
             streams = activeStreams
         });
-    }
-    
-    public static int GetActiveConnectionsCount()
-    {
-        lock (_connectionsLock)
-        {
-            // Логируем для отладки
-            var count = _activeConnectionsCount;
-            // Используем статический logger через сервис или просто возвращаем значение
-            return count;
-        }
     }
 }
 

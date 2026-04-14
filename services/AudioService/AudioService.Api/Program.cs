@@ -8,6 +8,7 @@ using AudioService.Application.Validators;
 using AudioService.Infrastructure.Services;
 using AudioService.Infrastructure.ExternalServices;
 using AudioService.Api.Middleware;
+using Common.Monitoring;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -166,6 +167,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddDotNetRuntimeMetrics();
+
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
@@ -182,6 +185,8 @@ catch (Exception ex)
     logger.LogError(ex, "An error occurred while migrating the database.");
 }
 
+app.UseRouting();
+app.UsePrometheusHttpMetrics("audio-service");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();
@@ -191,5 +196,6 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapPrometheusScrapeEndpoint();
 
 app.Run();

@@ -136,3 +136,8 @@ E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net8.0\System.Security.Cryptography.Pkcs.dll
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net8.0\System.Security.Cryptography.Xml.dll
 E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net8.0\Prometheus.NetStandard.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net8.0\Common.Monitoring.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net8.0\Common.Monitoring.pdb
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net8.0\Prometheus.AspNetCore.dll
+E:\audio-kostya\audio-project\services\AuthService\AuthService.Api\bin\Debug\net8.0\prometheus-net.DotNetRuntime.dll

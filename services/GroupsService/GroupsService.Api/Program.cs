@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using GroupsService.Api.Middleware;
+using Common.Monitoring;
 using GroupsService.Infrastructure.Messaging;
 using GroupsService.Infrastructure.Outbox;
 using Microsoft.Extensions.Logging;
@@ -146,6 +147,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddDotNetRuntimeMetrics();
+
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
@@ -162,6 +165,8 @@ catch (Exception ex)
     logger.LogError(ex, "An error occurred while migrating the database.");
 }
 
+app.UseRouting();
+app.UsePrometheusHttpMetrics("groups-service");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();
@@ -172,5 +177,6 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapPrometheusScrapeEndpoint();
 
 app.Run();

@@ -8,6 +8,7 @@ using AuthService.Infrastructure.Outbox;
 using AuthService.Infrastructure.Repositories;
 using AuthService.Infrastructure.Security;
 using AuthService.Api.Middleware;
+using Common.Monitoring;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -106,6 +107,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddDotNetRuntimeMetrics();
+
 var corsOrigins = configuration.GetValue<string>("CORS_ORIGINS")?.Split(',') 
     ?? new[] { "http://localhost:8000", "http://localhost:3000", "http://127.0.0.1:8000" };
 
@@ -145,6 +148,8 @@ catch (Exception ex)
     logger.LogError(ex, "An error occurred while migrating the OutboxDbContext.");
 }
 
+app.UseRouting();
+app.UsePrometheusHttpMetrics("auth-service");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();
@@ -155,5 +160,6 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapPrometheusScrapeEndpoint();
 
 app.Run();

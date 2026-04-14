@@ -126,3 +126,8 @@ E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\obj\Debug\n
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\obj\Debug\net8.0\AudioService.Api.pdb
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\obj\Debug\net8.0\AudioService.Api.genruntimeconfig.cache
 E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\obj\Debug\net8.0\ref\AudioService.Api.dll
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\bin\Debug\net8.0\Prometheus.NetStandard.dll
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\bin\Debug\net8.0\Common.Monitoring.dll
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\bin\Debug\net8.0\Common.Monitoring.pdb
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\bin\Debug\net8.0\Prometheus.AspNetCore.dll
+E:\audio-kostya\audio-project\services\AudioService\AudioService.Api\bin\Debug\net8.0\prometheus-net.DotNetRuntime.dll
