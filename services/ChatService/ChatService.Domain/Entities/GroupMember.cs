@@ -38,6 +38,11 @@ public class GroupMember : BaseEntity
             CreatedAt = DateTime.UtcNow
         };
     }
+
+    public void ChangeRole(GroupMemberRole newRole)
+    {
+        Role = newRole;
+    }
 }
 
 public enum GroupMemberRole

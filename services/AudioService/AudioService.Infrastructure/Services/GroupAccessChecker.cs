@@ -23,12 +23,20 @@ public class GroupAccessChecker : IGroupAccessChecker
             return false;
         }
 
-        if (groupMember.Role == GroupMemberRole.Owner)
+        return groupMember.Role == GroupMemberRole.Owner;
+    }
+
+    public async Task<bool> IsGroupAdminOrOwnerAsync(string groupId, string userId, CancellationToken cancellationToken = default)
+    {
+        var groupMember = await _dbContext.GroupMembers
+            .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId, cancellationToken);
+
+        if (groupMember == null)
         {
-            return true;
+            return false;
         }
 
-        return false;
+        return groupMember.Role is GroupMemberRole.Owner or GroupMemberRole.Admin;
     }
 
     public async Task<bool> IsGroupMemberAsync(string groupId, string userId, CancellationToken cancellationToken = default)

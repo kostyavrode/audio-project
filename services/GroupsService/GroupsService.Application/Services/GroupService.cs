@@ -224,6 +224,50 @@ public class GroupService : IGroupService
         });
     }
 
+    public async Task<GroupMemberDto> UpdateMemberRoleAsync(
+        string groupId,
+        string targetUserId,
+        UpdateMemberRoleDto updateDto,
+        string actorUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var group = await _groupRepository.GetByIdAsync(groupId, cancellationToken);
+
+        if (group == null)
+        {
+            throw new GroupNotFoundException(groupId);
+        }
+
+        if (!Enum.TryParse<GroupMemberRole>(updateDto.Role, ignoreCase: true, out var newRole))
+        {
+            throw new DomainException($"Invalid role: {updateDto.Role}");
+        }
+
+        group.ChangeMemberRole(actorUserId, targetUserId, newRole);
+
+        await _groupRepository.UpdateAsync(group, cancellationToken);
+        await _groupRepository.SaveChangesAsync(cancellationToken);
+
+        var member = group.Members.First(m => m.UserId == targetUserId);
+
+        _logger.LogInformation(
+            "User {TargetUserId} role changed to {Role} in group {GroupId} by owner {ActorUserId}",
+            targetUserId,
+            newRole,
+            groupId,
+            actorUserId);
+
+        return new GroupMemberDto
+        {
+            Id = member.Id,
+            GroupId = member.GroupId,
+            UserId = member.UserId,
+            NickName = member.NickName,
+            Role = member.Role.ToString(),
+            JoinedAt = member.CreatedAt
+        };
+    }
+
     private static GroupDto MapToGroupDto(Group group)
     {
         return new GroupDto

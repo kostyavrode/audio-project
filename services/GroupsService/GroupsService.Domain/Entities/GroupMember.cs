@@ -46,4 +46,14 @@ public class GroupMember : BaseEntity
     {
         NickName = nickName ?? "Unknown";
     }
+
+    public void ChangeRole(GroupMemberRole newRole)
+    {
+        if (newRole == GroupMemberRole.Owner)
+        {
+            throw new DomainException("Cannot set owner role through member role change");
+        }
+
+        Role = newRole;
+    }
 }

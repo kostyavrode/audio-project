@@ -31,9 +31,9 @@ public class AudioChannelService : IAudioChannelService
 
     public async Task<AudioChannelDto> CreateAudioChannelAsync(CreateAudioChannelDto createDto, string userId, CancellationToken cancellationToken = default)
     {
-        var isOwner = await _groupAccessChecker.IsGroupOwnerAsync(createDto.GroupId, userId, cancellationToken);
+        var canCreate = await _groupAccessChecker.IsGroupAdminOrOwnerAsync(createDto.GroupId, userId, cancellationToken);
 
-        if (!isOwner)
+        if (!canCreate)
         {
             throw new UnauthorizedToCreateChannelException(createDto.GroupId, userId);
         }

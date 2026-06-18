@@ -13,4 +13,5 @@ public interface IGroupService
     Task JoinGroupAsync(string groupId, JoinGroupDto joinGroupDto, string userId, string nickName, CancellationToken cancellationToken = default);
     Task LeaveGroupAsync(string groupId, string userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<GroupMemberDto>> GetGroupMembersAsync(string groupId, string userId, CancellationToken cancellationToken = default);
+    Task<GroupMemberDto> UpdateMemberRoleAsync(string groupId, string targetUserId, UpdateMemberRoleDto updateDto, string actorUserId, CancellationToken cancellationToken = default);
 }

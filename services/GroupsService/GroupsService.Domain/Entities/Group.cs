@@ -140,6 +140,45 @@ public class Group : BaseEntity
         
         AddDomainEvent(new UserLeftGroupEvent(Id, userId, DateTime.UtcNow));
     }
+
+    public void ChangeMemberRole(string actorUserId, string targetUserId, GroupMemberRole newRole)
+    {
+        if (OwnerId != actorUserId)
+        {
+            throw new DomainException("Only group owner can change member roles");
+        }
+
+        if (actorUserId == targetUserId)
+        {
+            throw new DomainException("Cannot change your own role");
+        }
+
+        if (newRole == GroupMemberRole.Owner)
+        {
+            throw new DomainException("Cannot assign owner role");
+        }
+
+        var member = _members.FirstOrDefault(m => m.UserId == targetUserId);
+        if (member == null)
+        {
+            throw new DomainException($"User {targetUserId} is not a member of this group");
+        }
+
+        if (member.Role == GroupMemberRole.Owner)
+        {
+            throw new DomainException("Cannot change owner role");
+        }
+
+        if (member.Role == newRole)
+        {
+            return;
+        }
+
+        member.ChangeRole(newRole);
+        MarkAsUpdated();
+
+        AddDomainEvent(new GroupMemberRoleChangedEvent(Id, targetUserId, newRole.ToString(), DateTime.UtcNow));
+    }
     
     public void MarkForDeletion()
     {

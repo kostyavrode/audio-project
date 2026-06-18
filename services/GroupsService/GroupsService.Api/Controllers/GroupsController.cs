@@ -347,4 +347,51 @@ public class GroupsController : ControllerBase
             return Unauthorized(new { error = ex.Message });
         }
     }
+
+    [HttpPut("{id}/members/{userId}/role")]
+    [ProducesResponseType(typeof(GroupMemberDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GroupMemberDto>> UpdateMemberRole(
+        string id,
+        string userId,
+        [FromBody] UpdateMemberRoleDto updateDto,
+        CancellationToken cancellationToken = default)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            userIdClaim = User.FindFirstValue("sub");
+        }
+
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            return Unauthorized(new { error = "User ID not found in token" });
+        }
+
+        try
+        {
+            var memberDto = await _groupService.UpdateMemberRoleAsync(id, userId, updateDto, userIdClaim, cancellationToken);
+
+            _logger.LogInformation(
+                "Member {TargetUserId} role updated to {Role} in group {GroupId} by {ActorUserId}",
+                userId,
+                updateDto.Role,
+                id,
+                userIdClaim);
+
+            return Ok(memberDto);
+        }
+        catch (GroupNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Group not found: {GroupId}", id);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (DomainException ex)
+        {
+            _logger.LogWarning(ex, "Validation error during role update: Group {GroupId}", id);
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

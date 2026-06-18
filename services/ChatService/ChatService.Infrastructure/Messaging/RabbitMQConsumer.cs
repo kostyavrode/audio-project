@@ -95,6 +95,12 @@ public class RabbitMQConsumer : BackgroundService, IRabbitMQConsumer
                 exchange: ExchangeName,
                 routingKey: "GroupDeletedEvent"
             );
+
+            _channel.QueueBind(
+                queue: QueueName,
+                exchange: ExchangeName,
+                routingKey: "GroupMemberRoleChangedEvent"
+            );
             
             _channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
             
@@ -185,6 +191,10 @@ public class RabbitMQConsumer : BackgroundService, IRabbitMQConsumer
             
             case "GroupDeletedEvent":
                 await HandleGroupDeletedEventAsync(eventData, groupMemberRepository, dbContext, eventId, cancellationToken);
+                break;
+
+            case "GroupMemberRoleChangedEvent":
+                await HandleGroupMemberRoleChangedEventAsync(eventData, groupMemberRepository, dbContext, eventId, cancellationToken);
                 break;
             
             default:
@@ -313,7 +323,55 @@ public class RabbitMQConsumer : BackgroundService, IRabbitMQConsumer
         
         _logger.LogInformation("Processed GroupDeletedEvent. GroupId: {GroupId}", groupId);
     }
-    
+
+    private async Task HandleGroupMemberRoleChangedEventAsync(
+        JsonElement eventData,
+        IGroupMemberRepository groupMemberRepository,
+        ChatDbContext dbContext,
+        Guid eventId,
+        CancellationToken cancellationToken)
+    {
+        if (!eventData.TryGetProperty("groupId", out var groupIdElement) ||
+            !eventData.TryGetProperty("userId", out var userIdElement) ||
+            !eventData.TryGetProperty("role", out var roleElement))
+        {
+            _logger.LogWarning("Invalid GroupMemberRoleChangedEvent data: missing groupId, userId or role");
+            return;
+        }
+
+        var groupId = groupIdElement.GetString();
+        var userId = userIdElement.GetString();
+        var roleStr = roleElement.GetString();
+
+        if (string.IsNullOrEmpty(groupId) || string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(roleStr))
+        {
+            _logger.LogWarning("Invalid GroupMemberRoleChangedEvent data");
+            return;
+        }
+
+        var groupMember = await groupMemberRepository.GetByGroupIdAndUserIdAsync(groupId, userId, cancellationToken);
+        if (groupMember == null)
+        {
+            _logger.LogWarning(
+                "GroupMember not found for role change. GroupId: {GroupId}, UserId: {UserId}",
+                groupId,
+                userId);
+            return;
+        }
+
+        var role = Enum.Parse<GroupMemberRole>(roleStr);
+        groupMember.ChangeRole(role);
+
+        await SaveProcessedEventAsync(dbContext, eventId, "GroupMemberRoleChangedEvent", cancellationToken);
+        await groupMemberRepository.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Processed GroupMemberRoleChangedEvent. GroupId: {GroupId}, UserId: {UserId}, Role: {Role}",
+            groupId,
+            userId,
+            roleStr);
+    }
+
     private async Task SaveProcessedEventAsync(
         ChatDbContext dbContext,
         Guid eventId,
