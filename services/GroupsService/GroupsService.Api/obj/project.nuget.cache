@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "383HpJ3/+GQ=",
+  "dgSpecHash": "v49C01YMjn4=",
   "success": true,
-  "projectFilePath": "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Api\\GroupsService.Api.csproj",
+  "projectFilePath": "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Api\\GroupsService.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\inblo\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
     "C:\\Users\\inblo\\.nuget\\packages\\fluentvalidation.aspnetcore\\11.3.1\\fluentvalidation.aspnetcore.11.3.1.nupkg.sha512",

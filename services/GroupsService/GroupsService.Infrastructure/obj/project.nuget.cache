@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qtji8Vi7fyk=",
+  "dgSpecHash": "iij8/ZvXIOE=",
   "success": true,
-  "projectFilePath": "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Infrastructure\\GroupsService.Infrastructure.csproj",
+  "projectFilePath": "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Infrastructure\\GroupsService.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\inblo\\.nuget\\packages\\fluentvalidation\\12.1.1\\fluentvalidation.12.1.1.nupkg.sha512",
     "C:\\Users\\inblo\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\12.1.1\\fluentvalidation.dependencyinjectionextensions.12.1.1.nupkg.sha512",

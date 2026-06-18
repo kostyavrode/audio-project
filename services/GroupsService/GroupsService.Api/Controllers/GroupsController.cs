@@ -349,6 +349,7 @@ public class GroupsController : ControllerBase
     }
 
     [HttpPut("{id}/members/{userId}/role")]
+    [HttpPost("{id}/members/{userId}/role")]
     [ProducesResponseType(typeof(GroupMemberDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -358,6 +359,33 @@ public class GroupsController : ControllerBase
         string userId,
         [FromBody] UpdateMemberRoleDto updateDto,
         CancellationToken cancellationToken = default)
+    {
+        return await UpdateMemberRoleCore(id, userId, updateDto, cancellationToken);
+    }
+
+    [HttpPost("{id}/members/role")]
+    [ProducesResponseType(typeof(GroupMemberDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GroupMemberDto>> UpdateMemberRoleByBody(
+        string id,
+        [FromBody] UpdateMemberRoleDto updateDto,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(updateDto.UserId))
+        {
+            return BadRequest(new { error = "UserId is required" });
+        }
+
+        return await UpdateMemberRoleCore(id, updateDto.UserId, updateDto, cancellationToken);
+    }
+
+    private async Task<ActionResult<GroupMemberDto>> UpdateMemberRoleCore(
+        string id,
+        string userId,
+        UpdateMemberRoleDto updateDto,
+        CancellationToken cancellationToken)
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdClaim))
