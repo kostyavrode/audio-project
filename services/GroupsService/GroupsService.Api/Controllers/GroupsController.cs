@@ -223,6 +223,28 @@ public class GroupsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("member-role")]
+    [ProducesResponseType(typeof(GroupMemberDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GroupMemberDto>> UpdateMemberRoleFlat(
+        [FromBody] UpdateMemberRoleDto updateDto,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(updateDto.GroupId))
+        {
+            return BadRequest(new { error = "GroupId is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(updateDto.UserId))
+        {
+            return BadRequest(new { error = "UserId is required" });
+        }
+
+        return await UpdateMemberRoleCore(updateDto.GroupId, updateDto.UserId, updateDto, cancellationToken);
+    }
+
     [HttpPost("{id}/join")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
