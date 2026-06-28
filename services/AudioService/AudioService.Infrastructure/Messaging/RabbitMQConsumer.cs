@@ -363,11 +363,23 @@ public class RabbitMQConsumer : BackgroundService, IRabbitMQConsumer
 
         if (groupMember == null)
         {
+            // Реплика AudioService могла никогда не получить UserJoinedGroupEvent для этого
+            // участника (например, он был добавлен в группу до того, как outbox-публикация
+            // в GroupsService заработала). Не теряем событие смены роли - создаём запись.
             _logger.LogWarning(
-                "GroupMember not found for role change. GroupId: {GroupId}, UserId: {UserId}",
+                "GroupMember not found for role change, creating it. GroupId: {GroupId}, UserId: {UserId}",
                 groupId,
                 userId);
-            return;
+
+            groupMember = new GroupMember
+            {
+                Id = Guid.NewGuid().ToString(),
+                GroupId = groupId,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await dbContext.GroupMembers.AddAsync(groupMember, cancellationToken);
         }
 
         groupMember.Role = Enum.Parse<GroupMemberRole>(roleStr);
