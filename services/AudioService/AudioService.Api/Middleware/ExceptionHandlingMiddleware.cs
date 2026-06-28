@@ -41,6 +41,10 @@ public class ExceptionHandlingMiddleware
                 break;
 
             case UnauthorizedToCreateChannelException:
+                code = HttpStatusCode.Forbidden;
+                message = exception.Message;
+                break;
+
             case UnauthorizedAccessException:
                 code = HttpStatusCode.Unauthorized;
                 message = exception.Message;

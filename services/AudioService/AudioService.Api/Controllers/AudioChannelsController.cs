@@ -51,7 +51,7 @@ public class AudioChannelsController : ControllerBase
         catch (UnauthorizedToCreateChannelException ex)
         {
             _logger.LogWarning(ex, "Unauthorized channel creation attempt: Group {GroupId} by user {UserId}", createDto.GroupId, userIdClaim);
-            return Unauthorized(new { error = ex.Message });
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
         }
         catch (DomainException ex)
         {
