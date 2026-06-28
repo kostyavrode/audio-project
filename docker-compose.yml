@@ -1,34 +1,37 @@
 version: '3.8'
 
+# Для сервера с уже установленным nginx
+# Использование: docker-compose -f docker-compose.server.yml up -d
+
 services:
   postgres:
     image: postgres:15-alpine
     container_name: audio-postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-audioapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: audio-rabbitmq
-    env_file:
-      - .env
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:5672:5672"      # AMQP (только localhost)
+      - "127.0.0.1:15672:15672"    # Management UI (только localhost)
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -36,19 +39,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   janus:
     image: canyan/janus-gateway
     container_name: audio-janus
     ports:
-      - "8088:8088"
-      - "8188:8188"
-      - "8089:8089"
-      - "8189:8189"
-      - "8009:8009"
-      - "7088:7088"
-      - "7089:7089"
-      - "10000-10010:10000-10010/udp"
+      - "127.0.0.1:8088:8088"      # HTTP API
+      - "127.0.0.1:8188:8188"      # WebSocket
+      - "10000-10100:10000-10100/udp"  # RTP/RTCP (нужен публичный доступ)
+    volumes:
+      - ./janus-config/janus.jcfg:/usr/local/etc/janus/janus.jcfg:ro
     restart: unless-stopped
 
   auth-service:
@@ -59,18 +60,21 @@ services:
     env_file:
       - .env
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=authservicedb_dev;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=authservicedb;Username=${POSTGRES_USER:-audioapp};Password=${POSTGRES_PASSWORD}
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
-      - JwtSettings__Issuer=${JWT_ISSUER:-AuthService}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-GroupChatApp}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
       - RabbitMQ__HostName=rabbitmq
       - RabbitMQ__Port=5672
-      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - CookieSettings__HttpOnly=false
+      - CookieSettings__Secure=true
+      - CookieSettings__SameSite=None
     ports:
-      - "5001:8080"
+      - "127.0.0.1:5001:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,18 +90,18 @@ services:
     env_file:
       - .env
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=GroupsServiceDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=groupsservicedb;Username=${POSTGRES_USER:-audioapp};Password=${POSTGRES_PASSWORD}
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
-      - JwtSettings__Issuer=${JWT_ISSUER:-AuthService}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-GroupChatApp}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
       - RabbitMQ__HostName=rabbitmq
       - RabbitMQ__Port=5672
-      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
     ports:
-      - "5002:8080"
+      - "127.0.0.1:5002:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -113,18 +117,18 @@ services:
     env_file:
       - .env
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ChatServiceDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=chatservicedb;Username=${POSTGRES_USER:-audioapp};Password=${POSTGRES_PASSWORD}
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
-      - JwtSettings__Issuer=${JWT_ISSUER:-AuthService}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-GroupChatApp}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
       - RabbitMQ__HostName=rabbitmq
       - RabbitMQ__Port=5672
-      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
     ports:
-      - "5003:8080"
+      - "127.0.0.1:5003:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -140,20 +144,20 @@ services:
     env_file:
       - .env
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=AudioServiceDb;Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=audioservicedb;Username=${POSTGRES_USER:-audioapp};Password=${POSTGRES_PASSWORD}
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
-      - JwtSettings__Issuer=${JWT_ISSUER:-AuthService}
-      - JwtSettings__Audience=${JWT_AUDIENCE:-GroupChatApp}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
       - RabbitMQ__HostName=rabbitmq
       - RabbitMQ__Port=5672
-      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
-      - JanusGateway__BaseUrl=${JANUS_BASE_URL:-http://janus:8088}
-      - JanusGateway__ApiSecret=${JANUS_API_SECRET:-janusoverlord}
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - JanusGateway__BaseUrl=http://janus:8088
+      - JanusGateway__ApiSecret=${JANUS_API_SECRET}
     ports:
-      - "5004:8080"
+      - "127.0.0.1:5004:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -171,23 +175,69 @@ services:
     env_file:
       - .env
     environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
       - JWT_SECRET=${JWT_SECRET_KEY}
-      - JWT_ISSUER=${JWT_ISSUER:-AuthService}
-      - JWT_AUDIENCE=${JWT_AUDIENCE:-GroupChatApp}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - ChatServiceUrl=http://chat-service:8080
       - RabbitMQ__HostName=rabbitmq
       - RabbitMQ__Port=5672
-      - RabbitMQ__UserName=${RABBITMQ_USER:-guest}
-      - RabbitMQ__Password=${RABBITMQ_PASSWORD:-guest}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:8000,http://localhost:3000,http://127.0.0.1:8000}
+      - RabbitMQ__UserName=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://audio-kostya.online}
     ports:
-      - "5005:8080"
+      - "127.0.0.1:5005:8080"
     depends_on:
       rabbitmq:
         condition: service_healthy
+      chat-service:
+        condition: service_started
     restart: unless-stopped
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: audio-node-exporter
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9100:9100"
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro,rslave"
+
+
+  prometheus:
+      image: prom/prometheus:latest
+      container_name: audio-prometheus
+      restart:  unless-stopped
+      command:
+        - "--config.file=/etc/prometheus/prometheus.yml"
+        - "--storage.tsdb.path=/prometheus"
+        - "--web.enable-lifecycle"
+      ports:
+        - "127.0.0.1:9090:9090"
+      volumes:
+        - "./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+        - prometheus-data:/prometheus
+  grafana:
+      image: grafana/grafana:latest
+      container_name: audio-grafana
+      restart: unless-stopped
+      ports:
+        - "3000:3000"
+      environment:
+        GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+        GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+        #GF_SERVER_DOMAIN: audio-kostya.online
+        GF_SERVER_ROOT_URL: http://87.228.97.188:3000
+        #GF_SERVER_SERVE_FROM_SUB_PATH: true
+      volumes:
+        - grafana-data:/var/lib/grafana
+      depends_on:
+        - prometheus
 
 volumes:
   postgres-data:
   rabbitmq-data:
+  prometheus-data:
+  grafana-data:
