@@ -3591,11 +3591,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Infrastructure\\GroupsService.Infrastructure.csproj",
+      "projectUniqueName": "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Infrastructure\\GroupsService.Infrastructure.csproj",
       "projectName": "GroupsService.Infrastructure",
-      "projectPath": "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Infrastructure\\GroupsService.Infrastructure.csproj",
+      "projectPath": "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Infrastructure\\GroupsService.Infrastructure.csproj",
       "packagesPath": "C:\\Users\\inblo\\.nuget\\packages\\",
-      "outputPath": "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Infrastructure\\obj\\",
+      "outputPath": "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -3617,11 +3617,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Application\\GroupsService.Application.csproj": {
-              "projectPath": "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Application\\GroupsService.Application.csproj"
+            "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Application\\GroupsService.Application.csproj": {
+              "projectPath": "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Application\\GroupsService.Application.csproj"
             },
-            "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Domain\\GroupsService.Domain.csproj": {
-              "projectPath": "e:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Domain\\GroupsService.Domain.csproj"
+            "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Domain\\GroupsService.Domain.csproj": {
+              "projectPath": "E:\\audio-kostya\\audio-project\\services\\GroupsService\\GroupsService.Domain\\GroupsService.Domain.csproj"
             }
           }
         }

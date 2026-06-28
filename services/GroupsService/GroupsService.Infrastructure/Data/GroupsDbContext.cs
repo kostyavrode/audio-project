@@ -61,58 +61,51 @@ public class GroupsDbContext : DbContext
             .ToList();
         
         var result = await base.SaveChangesAsync(cancellationToken);
-        
+
         if (entitiesWithEvents.Any())
         {
-            OutboxDbContext? outboxDbContext = null;
-            
-            if (_httpContextAccessor?.HttpContext != null)
+            try
             {
-                outboxDbContext = _httpContextAccessor.HttpContext.RequestServices
-                    .GetRequiredService<OutboxDbContext>();
-            }
-            else if (_serviceProvider != null)
-            {
-                using var scope = _serviceProvider.CreateScope();
-                outboxDbContext = scope.ServiceProvider.GetRequiredService<OutboxDbContext>();
-            }
-            
-            if (outboxDbContext != null)
-            {
-                var totalEvents = entitiesWithEvents.Sum(e => e.DomainEvents.Count);
-                _logger?.LogInformation("Saving {Count} domain events to outbox", totalEvents);
-                
-                foreach (var entity in entitiesWithEvents)
+                OutboxDbContext? outboxDbContext = null;
+
+                if (_httpContextAccessor?.HttpContext != null)
                 {
-                    var eventTypes = entity.DomainEvents.Select(e => e.GetType().Name).ToList();
-                    _logger?.LogInformation("Entity {EntityType} (Id: {EntityId}) has {EventCount} events: {EventTypes}", 
-                        entity.GetType().Name, entity.Id, entity.DomainEvents.Count, string.Join(", ", eventTypes));
-                    
-                    foreach (var domainEvent in entity.DomainEvents)
-                    {
-                        var jsonOptions = new System.Text.Json.JsonSerializerOptions
-                        {
-                            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-                            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never,
-                            WriteIndented = false
-                        };
-                        var testJson = System.Text.Json.JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), jsonOptions);
-                        _logger?.LogInformation("Event {EventType} serialized JSON: {Json}", 
-                            domainEvent.GetType().Name, testJson);
-                    }
-                    
-                    await entity.SaveDomainEventsToOutboxAsync(outboxDbContext, cancellationToken);
+                    outboxDbContext = _httpContextAccessor.HttpContext.RequestServices
+                        .GetRequiredService<OutboxDbContext>();
                 }
-                
-                await outboxDbContext.SaveChangesAsync(cancellationToken);
-                _logger?.LogInformation("Successfully saved {Count} domain events to outbox", totalEvents);
+                else if (_serviceProvider != null)
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    outboxDbContext = scope.ServiceProvider.GetRequiredService<OutboxDbContext>();
+                }
+
+                if (outboxDbContext != null)
+                {
+                    var totalEvents = entitiesWithEvents.Sum(e => e.DomainEvents.Count);
+                    _logger?.LogInformation("Saving {Count} domain events to outbox", totalEvents);
+
+                    foreach (var entity in entitiesWithEvents)
+                    {
+                        await entity.SaveDomainEventsToOutboxAsync(outboxDbContext, cancellationToken);
+                    }
+
+                    await outboxDbContext.SaveChangesAsync(cancellationToken);
+                    _logger?.LogInformation("Successfully saved {Count} domain events to outbox", totalEvents);
+                }
+                else
+                {
+                    _logger?.LogWarning("Could not resolve OutboxDbContext. Domain events were not saved to outbox.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                _logger?.LogWarning("Could not resolve OutboxDbContext. Domain events were not saved to outbox.");
+                // The main entity changes (e.g. member role) are already committed above.
+                // A failure to publish the outbox event must not turn a successful
+                // role/data change into an error response for the caller.
+                _logger?.LogError(ex, "Failed to save domain events to outbox. Main changes were already committed.");
             }
         }
-    
+
         return result;
     }
 }
