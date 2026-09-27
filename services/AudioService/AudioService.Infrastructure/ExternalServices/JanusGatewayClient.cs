@@ -244,9 +244,11 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
 
     public async Task<List<JanusParticipant>> GetRoomParticipantsAsync(long roomId, CancellationToken cancellationToken = default)
     {
+        long? createdSessionId = null;
         try
         {
             var sessionId = await CreateSessionAsync(cancellationToken);
+            createdSessionId = sessionId;
             var handleId = await AttachPluginAsync(sessionId, cancellationToken);
 
             var request = new
@@ -315,6 +317,33 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
         {
             _logger.LogError(ex, "Failed to get participants for room {RoomId}", roomId);
             return new List<JanusParticipant>();
+        }
+        finally
+        {
+            // Метод вызывается очень часто (опрос участников с каждой открытой страницы группы),
+            // поэтому сразу уничтожаем временную сессию, а не ждём session_timeout в Janus
+            if (createdSessionId.HasValue)
+            {
+                await DestroySessionAsync(createdSessionId.Value);
+            }
+        }
+    }
+
+    private async Task DestroySessionAsync(long sessionId)
+    {
+        try
+        {
+            var request = new
+            {
+                janus = "destroy",
+                transaction = Guid.NewGuid().ToString()
+            };
+
+            await _httpClient.PostAsJsonAsync($"/janus/{sessionId}", request);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to destroy Janus session {SessionId}", sessionId);
         }
     }
 
