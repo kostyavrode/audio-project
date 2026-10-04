@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ChatService.Domain.Interfaces;
 using ChatService.Domain.Entities;
 using System.Security.Claims;
+using ChatService.Api.Security;
 
 namespace ChatService.Api.Controllers;
 
@@ -13,11 +14,14 @@ public class SyncController : ControllerBase
 {
     private readonly IGroupMemberRepository _groupMemberRepository;
     private readonly ILogger<SyncController> _logger;
+    private readonly GroupMembershipVerifier _membershipVerifier;
 
     public SyncController(
         IGroupMemberRepository groupMemberRepository,
+        GroupMembershipVerifier membershipVerifier,
         ILogger<SyncController> logger)
     {
+        _membershipVerifier = membershipVerifier ?? throw new ArgumentNullException(nameof(membershipVerifier));
         _groupMemberRepository = groupMemberRepository ?? throw new ArgumentNullException(nameof(groupMemberRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -48,15 +52,18 @@ public class SyncController : ControllerBase
             return Ok(new { message = "User is already a member of the group" });
         }
 
-        GroupMemberRole memberRole;
-        if (Enum.TryParse<GroupMemberRole>(role, true, out var parsedRole))
+        // Раньше этот метод добавлял ЛЮБОГО вошедшего пользователя в чат ЛЮБОЙ группы,
+        // причём с ролью из запроса: так обходился пароль группы и можно было назначить себя
+        // владельцем. Теперь синхронизируем только реальных участников (по данным GroupsService)
+        // и только с обычной ролью.
+        var isRealMember = await _membershipVerifier.IsMemberAsync(
+            groupId, userId, GroupMembershipVerifier.ExtractToken(Request), cancellationToken);
+        if (!isRealMember)
         {
-            memberRole = parsedRole;
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "User must be a member of the group" });
         }
-        else
-        {
-            memberRole = GroupMemberRole.Member;
-        }
+
+        var memberRole = GroupMemberRole.Member;
 
         var groupMember = GroupMember.Create(
             Guid.NewGuid().ToString(),

@@ -100,6 +100,8 @@ builder.Services.AddScoped<IAudioChannelRepository, AudioChannelRepository>();
 
 builder.Services.AddScoped<IAudioChannelService, AudioChannelService>();
 builder.Services.AddScoped<IGroupAccessChecker, GroupAccessChecker>();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<AudioService.Api.Security.GroupMembershipVerifier>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IJanusGatewayClient>(serviceProvider =>
@@ -168,6 +170,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDotNetRuntimeMetrics();
+builder.Services.AddHostedService<AudioService.Api.Monitoring.RoomOccupancyMetricsService>();
 
 var app = builder.Build();
 
@@ -189,8 +192,12 @@ app.UseRouting();
 app.UsePrometheusHttpMetrics("audio-service");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Описание API наружу в продакшене не отдаём
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseCors("AllowAll");
 app.UseAuthentication();

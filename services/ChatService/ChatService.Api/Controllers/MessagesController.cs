@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using ChatService.Application.DTOs;
 using ChatService.Application.Services;
 using ChatService.Infrastructure.Messaging;
+using ChatService.Api.Security;
+using ChatService.Domain.Interfaces;
 using System.Text.Json;
 
 namespace ChatService.Api.Controllers;
@@ -15,15 +17,41 @@ public class MessagesController : ControllerBase
     private readonly IMessageService _messageService;
     private readonly IRabbitMQPublisher _rabbitMQPublisher;
     private readonly ILogger<MessagesController> _logger;
+    private readonly IGroupMemberRepository _groupMemberRepository;
+    private readonly GroupMembershipVerifier _membershipVerifier;
 
     public MessagesController(
         IMessageService messageService,
         IRabbitMQPublisher rabbitMQPublisher,
+        IGroupMemberRepository groupMemberRepository,
+        GroupMembershipVerifier membershipVerifier,
         ILogger<MessagesController> logger)
     {
+        _groupMemberRepository = groupMemberRepository ?? throw new ArgumentNullException(nameof(groupMemberRepository));
+        _membershipVerifier = membershipVerifier ?? throw new ArgumentNullException(nameof(membershipVerifier));
         _messageService = messageService ?? throw new ArgumentNullException(nameof(messageService));
         _rabbitMQPublisher = rabbitMQPublisher ?? throw new ArgumentNullException(nameof(rabbitMQPublisher));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    private async Task<bool> IsGroupMemberAsync(string groupId, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return false;
+        }
+
+        // Сначала локальная копия участников; если в ней нет (вступил секунду назад,
+        // событие ещё не дошло) - спрашиваем GroupsService
+        if (await _groupMemberRepository.ExistsAsync(groupId, userId, cancellationToken))
+        {
+            return true;
+        }
+
+        return await _membershipVerifier.IsMemberAsync(
+            groupId, userId, GroupMembershipVerifier.ExtractToken(Request), cancellationToken);
     }
 
     [HttpGet("{groupId}")]
@@ -40,6 +68,16 @@ public class MessagesController : ControllerBase
         {
             return BadRequest(new { error = "Group ID is required" });
         }
+
+        // Читать переписку могут только участники группы. Раньше проверки не было, и любой
+        // вошедший пользователь мог получить историю любой группы, включая закрытые паролем.
+        if (!await IsGroupMemberAsync(groupId, cancellationToken))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "User must be a member of the group" });
+        }
+
+        pageSize = Math.Clamp(pageSize, 1, 200);
+        page = Math.Max(page, 1);
 
         var getMessagesDto = new GetMessagesDto
         {
@@ -77,7 +115,8 @@ public class MessagesController : ControllerBase
         {
             var message = await _messageService.GetMessageByIdAsync(messageId, cancellationToken);
             
-            if (message == null)
+            // Чужое сообщение не отличаем от несуществующего
+            if (message == null || !await IsGroupMemberAsync(message.GroupId, cancellationToken))
             {
                 return NotFound(new { error = "Message not found" });
             }

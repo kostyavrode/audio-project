@@ -31,6 +31,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("auth-register")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -41,10 +42,10 @@ public class AuthController : ControllerBase
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
-        var refreshTokenString = _jwtTokenGenerator.GenerateRefreshToken();
         var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         
-        await _authService.SetRefreshTokenAsync(userDto.Id, refreshTokenString, refreshTokenExpiresAt, cancellationToken);
+        var refreshTokenString = await _authService.IssueRefreshTokenAsync(
+            userDto.Id, _jwtTokenGenerator.GenerateRefreshToken(), refreshTokenExpiresAt, cancellationToken);
         
         SetCookie(_cookieSettings.AccessTokenCookieName, accessToken, TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
         SetCookie(_cookieSettings.RefreshTokenCookieName, refreshTokenString, TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
@@ -53,6 +54,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("auth-login")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserDto>> Login([FromBody] LoginDto loginDto,
@@ -63,10 +65,10 @@ public class AuthController : ControllerBase
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
-        var refreshTokenString = _jwtTokenGenerator.GenerateRefreshToken();
         var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         
-        await _authService.SetRefreshTokenAsync(userDto.Id, refreshTokenString, refreshTokenExpiresAt, cancellationToken);
+        var refreshTokenString = await _authService.IssueRefreshTokenAsync(
+            userDto.Id, _jwtTokenGenerator.GenerateRefreshToken(), refreshTokenExpiresAt, cancellationToken);
         
         SetCookie(_cookieSettings.AccessTokenCookieName, accessToken, 
             TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
@@ -92,10 +94,12 @@ public class AuthController : ControllerBase
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
         var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
-        var newRefreshTokenString = _jwtTokenGenerator.GenerateRefreshToken();
         var newRefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
 
-        await _authService.SetRefreshTokenAsync(userDto.Id, newRefreshTokenString, newRefreshTokenExpiresAt, cancellationToken);
+        // Тот же токен с продлённым сроком (см. IssueRefreshTokenAsync): повторный или
+        // параллельный refresh с ним же остаётся успешным
+        var newRefreshTokenString = await _authService.IssueRefreshTokenAsync(
+            userDto.Id, _jwtTokenGenerator.GenerateRefreshToken(), newRefreshTokenExpiresAt, cancellationToken);
 
         SetCookie(_cookieSettings.AccessTokenCookieName, newAccessToken, 
             TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
@@ -150,7 +154,8 @@ public class AuthController : ControllerBase
     {
         var cookieOptions = new CookieOptions
         {
-            HttpOnly = _cookieSettings.HttpOnly,
+            // Refresh-токен скриптам страницы не нужен - его читает только сервер
+            HttpOnly = _cookieSettings.HttpOnly || name == _cookieSettings.RefreshTokenCookieName,
             Secure = _cookieSettings.Secure,
             SameSite = _cookieSettings.SameSite switch
             {

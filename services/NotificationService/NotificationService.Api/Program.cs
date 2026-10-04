@@ -84,6 +84,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<NotificationService.Api.Security.GroupMembershipVerifier>();
 
 builder.Services.AddDotNetRuntimeMetrics();
 builder.Services.AddSignalRPresenceMetrics();

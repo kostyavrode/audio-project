@@ -126,6 +126,32 @@ public class AuthService : IAuthService
         await _userRepository.SaveChangesAsync(cancellationToken);
     }
     
+    public async Task<string> IssueRefreshTokenAsync(string userId, string newRefreshToken, DateTime expiresAt, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user == null)
+        {
+            throw new UserNotFoundException(userId);
+        }
+
+        // Действующий токен не заменяем, а продлеваем. У пользователя хранится один refresh-токен,
+        // и его замена при каждом обновлении/входе выкидывала из аккаунта:
+        //  - если ответ на refresh не дошёл до браузера (моргнула сеть, закрыли вкладку) -
+        //    в cookie оставался старый токен, которого в базе уже нет;
+        //  - если две вкладки обновлялись одновременно - вторая приходила с уже заменённым токеном;
+        //  - если человек входил со второго устройства - первое теряло сессию.
+        var token = user.RefreshToken != null && user.RefreshToken.IsValid()
+            ? user.RefreshToken.Token
+            : newRefreshToken;
+
+        user.SetRefreshToken(RefreshToken.Create(token, expiresAt));
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        await _userRepository.SaveChangesAsync(cancellationToken);
+
+        return token;
+    }
+
     public async Task LogoutAsync(string userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);

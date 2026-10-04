@@ -233,6 +233,8 @@ services:
         #GF_SERVER_SERVE_FROM_SUB_PATH: true
       volumes:
         - grafana-data:/var/lib/grafana
+        - "./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro"
+        - "./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro"
       depends_on:
         - prometheus
 

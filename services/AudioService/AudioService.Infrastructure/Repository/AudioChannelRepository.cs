@@ -28,6 +28,13 @@ public class AudioChannelRepository : IAudioChannelRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AudioChannel>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.AudioChannels
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(AudioChannel channel, CancellationToken cancellationToken = default)
     {
         await _context.AudioChannels.AddAsync(channel, cancellationToken);

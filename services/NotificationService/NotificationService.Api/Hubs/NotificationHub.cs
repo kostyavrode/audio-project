@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Collections.Concurrent;
+using NotificationService.Api.Security;
 
 namespace NotificationService.Api.Hubs;
 
@@ -15,6 +16,9 @@ public class NotificationHub : Hub
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly SignalRPresenceMetrics _presenceMetrics;
+    private readonly GroupMembershipVerifier _membershipVerifier;
+
+    private const string JoinedGroupsKey = "joined-groups";
     
     private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, VideoStreamInfo>> _activeVideoStreams = new();
 
@@ -22,8 +26,10 @@ public class NotificationHub : Hub
         ILogger<NotificationHub> logger,
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        SignalRPresenceMetrics presenceMetrics)
+        SignalRPresenceMetrics presenceMetrics,
+        GroupMembershipVerifier membershipVerifier)
     {
+        _membershipVerifier = membershipVerifier;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
@@ -50,6 +56,8 @@ public class NotificationHub : Hub
     {
         var userId = GetUserId();
 
+        _presenceMetrics.OnConnectionClosed(Context.ConnectionId);
+
         if (!string.IsNullOrEmpty(userId))
         {
             _presenceMetrics.OnDisconnected(HubMetricNames.Notification, userId);
@@ -75,7 +83,18 @@ public class NotificationHub : Hub
             return;
         }
 
+        // Подписаться на события группы может только её участник. Раньше проверки не было:
+        // любой вошедший пользователь мог слушать чат и события любой группы в реальном времени.
+        if (!await _membershipVerifier.IsMemberAsync(groupId, userId, GetToken(), Context.ConnectionAborted))
+        {
+            _logger.LogWarning("User {UserId} tried to join group {GroupId} without membership", userId, groupId);
+            await Clients.Caller.SendAsync("Error", "User must be a member of the group");
+            return;
+        }
+
         await Groups.AddToGroupAsync(Context.ConnectionId, groupId);
+        GetJoinedGroups().Add(groupId);
+        _presenceMetrics.OnGroupJoined(Context.ConnectionId, userId, groupId);
         _logger.LogInformation("User {UserId} joined group {GroupId}", userId, groupId);
         
         await Clients.Caller.SendAsync("JoinedGroup", groupId);
@@ -97,6 +116,8 @@ public class NotificationHub : Hub
         }
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
+        GetJoinedGroups().Remove(groupId);
+        _presenceMetrics.OnGroupLeft(Context.ConnectionId, groupId);
         _logger.LogInformation("User {UserId} left group {GroupId}", userId, groupId);
         
         await Clients.Caller.SendAsync("LeftGroup", groupId);
@@ -122,7 +143,21 @@ public class NotificationHub : Hub
             var chatServiceUrl = _configuration.GetValue<string>("ChatServiceUrl") 
                 ?? throw new InvalidOperationException("ChatServiceUrl is not configured");
 
-            var token = GetToken();
+            // Токен из HTTP-контекста соединения - тот, с которым вкладка подключилась. Он истекает
+            // через 30 минут, а соединение живёт часами, и ChatService начинал отвечать 401.
+            // Поэтому клиент присылает актуальный токен вместе с сообщением.
+            var payload = JsonSerializer.SerializeToElement(sendMessageDto);
+            string? token = null;
+            if (payload.ValueKind == JsonValueKind.Object &&
+                payload.TryGetProperty("accessToken", out var tokenElement) &&
+                tokenElement.ValueKind == JsonValueKind.String)
+            {
+                token = tokenElement.GetString();
+            }
+            if (string.IsNullOrEmpty(token))
+            {
+                token = GetToken();
+            }
             if (string.IsNullOrEmpty(token))
             {
                 await Clients.Caller.SendAsync("Error", "Token not found");
@@ -133,7 +168,19 @@ public class NotificationHub : Hub
             httpClient.DefaultRequestHeaders.Authorization = 
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
-            var json = JsonSerializer.Serialize(sendMessageDto);
+            // Токен дальше не пересылаем - в ChatService уходит только само сообщение
+            var forwarded = new Dictionary<string, JsonElement>();
+            if (payload.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var property in payload.EnumerateObject())
+                {
+                    if (!property.NameEquals("accessToken"))
+                    {
+                        forwarded[property.Name] = property.Value;
+                    }
+                }
+            }
+            var json = JsonSerializer.Serialize(forwarded);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await httpClient.PostAsync($"{chatServiceUrl}/api/Messages", content);
@@ -174,6 +221,19 @@ public class NotificationHub : Hub
             _logger.LogError(ex, "Error sending message via ChatService API");
             await Clients.Caller.SendAsync("Error", ex.Message);
         }
+    }
+
+    // Группы, в которые это соединение вошло после проверки членства
+    private HashSet<string> GetJoinedGroups()
+    {
+        if (Context.Items.TryGetValue(JoinedGroupsKey, out var value) && value is HashSet<string> groups)
+        {
+            return groups;
+        }
+
+        groups = new HashSet<string>(StringComparer.Ordinal);
+        Context.Items[JoinedGroupsKey] = groups;
+        return groups;
     }
 
     private string? GetToken()
@@ -237,6 +297,13 @@ public class NotificationHub : Hub
             return;
         }
 
+        // Рассылать уведомления можно только в группу, в которую соединение вошло
+        if (string.IsNullOrEmpty(groupId) || !GetJoinedGroups().Contains(groupId))
+        {
+            await Clients.Caller.SendAsync("Error", "Not joined to this group");
+            return;
+        }
+
         _logger.LogInformation("User {UserId} ({Nickname}) started {VideoType} stream in channel {ChannelId}", 
             userId, nickname, videoType, channelId);
         
@@ -266,6 +333,12 @@ public class NotificationHub : Hub
         if (string.IsNullOrEmpty(userId))
         {
             await Clients.Caller.SendAsync("Error", "User not authenticated");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(groupId) || !GetJoinedGroups().Contains(groupId))
+        {
+            await Clients.Caller.SendAsync("Error", "Not joined to this group");
             return;
         }
 

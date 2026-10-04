@@ -111,6 +111,9 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IGroupMemberRepository, GroupMemberRepository>();
 
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<ChatService.Api.Security.GroupMembershipVerifier>();
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddFluentValidationClientsideAdapters();
@@ -159,8 +162,12 @@ app.UseRouting();
 app.UsePrometheusHttpMetrics("chat-service");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Описание API наружу в продакшене не отдаём
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseCors("AllowAll");
 app.UseAuthentication();

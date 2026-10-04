@@ -251,67 +251,7 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
             createdSessionId = sessionId;
             var handleId = await AttachPluginAsync(sessionId, cancellationToken);
 
-            var request = new
-            {
-                janus = "message",
-                plugin = "janus.plugin.videoroom",
-                transaction = Guid.NewGuid().ToString(),
-                body = new
-                {
-                    request = "listparticipants", // Исправлено: list -> listparticipants для получения участников комнаты
-                    room = roomId
-                }
-            };
-
-            var response = await _httpClient.PostAsJsonAsync(
-                $"/janus/{sessionId}/{handleId}",
-                request,
-                cancellationToken
-            );
-
-            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
-
-            var participants = new List<JanusParticipant>();
-
-            if (result.TryGetProperty("plugindata", out var pluginData) &&
-                pluginData.TryGetProperty("data", out var data))
-            {
-                if (data.TryGetProperty("error_code", out _))
-                {
-                    return participants;
-                }
-
-                // Videoroom listparticipants возвращает участников в поле "participants"
-                JsonElement? publishersElement = null;
-                if (data.TryGetProperty("participants", out var participantsElement) && participantsElement.ValueKind == JsonValueKind.Array)
-                {
-                    publishersElement = participantsElement;
-                }
-                else if (data.TryGetProperty("list", out var listElement) && listElement.ValueKind == JsonValueKind.Array)
-                {
-                    publishersElement = listElement;
-                }
-                else if (data.TryGetProperty("publishers", out var pubElement) && pubElement.ValueKind == JsonValueKind.Array)
-                {
-                    publishersElement = pubElement;
-                }
-
-                if (publishersElement.HasValue)
-                {
-                    foreach (var p in publishersElement.Value.EnumerateArray())
-                    {
-                        participants.Add(new JanusParticipant
-                        {
-                            Id = p.TryGetProperty("id", out var id) ? id.GetInt64() : 0,
-                            Display = p.TryGetProperty("display", out var display) ? display.GetString() ?? "" : "",
-                            Muted = p.TryGetProperty("muted", out var muted) && muted.GetBoolean()
-                        });
-                    }
-                }
-            }
-
-            return participants;
+            return await ListParticipantsAsync(sessionId, handleId, roomId, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -327,6 +267,100 @@ public class JanusGatewayClient : IJanusGatewayClient, IDisposable
                 await DestroySessionAsync(createdSessionId.Value);
             }
         }
+    }
+
+    public async Task<Dictionary<long, List<JanusParticipant>>> GetParticipantsForRoomsAsync(IReadOnlyCollection<long> roomIds, CancellationToken cancellationToken = default)
+    {
+        var result = new Dictionary<long, List<JanusParticipant>>();
+        if (roomIds.Count == 0)
+        {
+            return result;
+        }
+
+        // Одна сессия на весь обход комнат. Ошибки связи с Janus не глотаем:
+        // вызывающий должен отличать "в комнатах пусто" от "Janus недоступен"
+        var sessionId = await CreateSessionAsync(cancellationToken);
+        try
+        {
+            var handleId = await AttachPluginAsync(sessionId, cancellationToken);
+
+            foreach (var roomId in roomIds)
+            {
+                result[roomId] = await ListParticipantsAsync(sessionId, handleId, roomId, cancellationToken);
+            }
+
+            return result;
+        }
+        finally
+        {
+            await DestroySessionAsync(sessionId);
+        }
+    }
+
+    private async Task<List<JanusParticipant>> ListParticipantsAsync(long sessionId, long handleId, long roomId, CancellationToken cancellationToken)
+    {
+        var request = new
+        {
+            janus = "message",
+            plugin = "janus.plugin.videoroom",
+            transaction = Guid.NewGuid().ToString(),
+            body = new
+            {
+                request = "listparticipants",
+                room = roomId
+            }
+        };
+
+        var response = await _httpClient.PostAsJsonAsync(
+            $"/janus/{sessionId}/{handleId}",
+            request,
+            cancellationToken
+        );
+        response.EnsureSuccessStatusCode();
+
+        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+        var result = JsonSerializer.Deserialize<JsonElement>(responseContent);
+
+        var participants = new List<JanusParticipant>();
+
+        if (result.TryGetProperty("plugindata", out var pluginData) &&
+            pluginData.TryGetProperty("data", out var data))
+        {
+            // Комнаты нет в Janus (например, после его перезапуска) - значит, в ней никого
+            if (data.TryGetProperty("error_code", out _))
+            {
+                return participants;
+            }
+
+            JsonElement? publishersElement = null;
+            if (data.TryGetProperty("participants", out var participantsElement) && participantsElement.ValueKind == JsonValueKind.Array)
+            {
+                publishersElement = participantsElement;
+            }
+            else if (data.TryGetProperty("list", out var listElement) && listElement.ValueKind == JsonValueKind.Array)
+            {
+                publishersElement = listElement;
+            }
+            else if (data.TryGetProperty("publishers", out var pubElement) && pubElement.ValueKind == JsonValueKind.Array)
+            {
+                publishersElement = pubElement;
+            }
+
+            if (publishersElement.HasValue)
+            {
+                foreach (var p in publishersElement.Value.EnumerateArray())
+                {
+                    participants.Add(new JanusParticipant
+                    {
+                        Id = p.TryGetProperty("id", out var id) ? id.GetInt64() : 0,
+                        Display = p.TryGetProperty("display", out var display) ? display.GetString() ?? "" : "",
+                        Muted = p.TryGetProperty("muted", out var muted) && muted.GetBoolean()
+                    });
+                }
+            }
+        }
+
+        return participants;
     }
 
     private async Task DestroySessionAsync(long sessionId)

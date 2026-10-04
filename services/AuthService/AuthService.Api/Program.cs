@@ -123,6 +123,54 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Ограничение частоты входа/регистрации/refresh: защита от перебора паролей и массовой регистрации.
+// Сервис стоит за nginx, поэтому адрес клиента берём из заголовка прокси.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync(
+            "{\"error\":\"Too many attempts. Please try again in a minute.\"}", cancellationToken);
+    };
+
+    static string ClientKey(HttpContext httpContext)
+    {
+        var realIp = httpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(realIp))
+        {
+            return realIp;
+        }
+
+        var forwarded = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(forwarded))
+        {
+            return forwarded.Split(',')[0].Trim();
+        }
+
+        return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    }
+
+    options.AddPolicy("auth-login", httpContext => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        "login:" + ClientKey(httpContext),
+        _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 15,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
+    options.AddPolicy("auth-register", httpContext => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        "register:" + ClientKey(httpContext),
+        _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(10),
+            QueueLimit = 0
+        }));
+});
+
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
@@ -152,11 +200,16 @@ app.UseRouting();
 app.UsePrometheusHttpMetrics("auth-service");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Описание API наружу в продакшене не отдаём
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

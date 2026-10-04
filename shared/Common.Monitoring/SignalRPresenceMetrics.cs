@@ -19,8 +19,92 @@ public sealed class SignalRPresenceMetrics
         "Number of open SignalR connections on this instance.",
         new GaugeConfiguration { LabelNames = new[] { HubLabel } });
 
+    private static readonly Gauge GroupViewers = Metrics.CreateGauge(
+        "audio_site_group_viewers",
+        "Distinct users who currently have the page of this group open.",
+        new GaugeConfiguration { LabelNames = new[] { "group_id" } });
+
     private readonly object _gate = new();
     private readonly Dictionary<string, Dictionary<string, int>> _connectionsByHubUser = new();
+
+    // connectionId -> (userId, groups this connection has joined)
+    private readonly Dictionary<string, (string UserId, HashSet<string> Groups)> _groupsByConnection = new(StringComparer.Ordinal);
+    // groupId -> userId -> number of that user's connections in the group
+    private readonly Dictionary<string, Dictionary<string, int>> _usersByGroup = new(StringComparer.Ordinal);
+
+    public void OnGroupJoined(string connectionId, string userId, string groupId)
+    {
+        lock (_gate)
+        {
+            if (!_groupsByConnection.TryGetValue(connectionId, out var entry))
+            {
+                entry = (userId, new HashSet<string>(StringComparer.Ordinal));
+                _groupsByConnection[connectionId] = entry;
+            }
+
+            if (!entry.Groups.Add(groupId))
+                return;
+
+            if (!_usersByGroup.TryGetValue(groupId, out var byUser))
+            {
+                byUser = new Dictionary<string, int>(StringComparer.Ordinal);
+                _usersByGroup[groupId] = byUser;
+            }
+
+            byUser.TryGetValue(entry.UserId, out var n);
+            byUser[entry.UserId] = n + 1;
+            GroupViewers.WithLabels(groupId).Set(byUser.Count);
+        }
+    }
+
+    public void OnGroupLeft(string connectionId, string groupId)
+    {
+        lock (_gate)
+        {
+            if (!_groupsByConnection.TryGetValue(connectionId, out var entry) || !entry.Groups.Remove(groupId))
+                return;
+
+            RemoveUserFromGroup(groupId, entry.UserId);
+            if (entry.Groups.Count == 0)
+                _groupsByConnection.Remove(connectionId);
+        }
+    }
+
+    /// <summary>
+    /// Must be called when a connection closes: SignalR drops its group memberships without notifying the hub.
+    /// </summary>
+    public void OnConnectionClosed(string connectionId)
+    {
+        lock (_gate)
+        {
+            if (!_groupsByConnection.Remove(connectionId, out var entry))
+                return;
+
+            foreach (var groupId in entry.Groups)
+                RemoveUserFromGroup(groupId, entry.UserId);
+        }
+    }
+
+    private void RemoveUserFromGroup(string groupId, string userId)
+    {
+        if (!_usersByGroup.TryGetValue(groupId, out var byUser) || !byUser.TryGetValue(userId, out var n))
+            return;
+
+        if (n <= 1)
+            byUser.Remove(userId);
+        else
+            byUser[userId] = n - 1;
+
+        if (byUser.Count == 0)
+        {
+            _usersByGroup.Remove(groupId);
+            GroupViewers.RemoveLabelled(groupId);
+        }
+        else
+        {
+            GroupViewers.WithLabels(groupId).Set(byUser.Count);
+        }
+    }
 
     public void OnConnected(string hub, string userId)
     {

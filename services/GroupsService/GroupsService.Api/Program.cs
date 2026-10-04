@@ -169,8 +169,12 @@ app.UseRouting();
 app.UsePrometheusHttpMetrics("groups-service");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Описание API наружу в продакшене не отдаём
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");

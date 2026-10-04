@@ -4,6 +4,8 @@ using System.Security.Claims;
 using AudioService.Application.DTOs;
 using AudioService.Application.Services;
 using AudioService.Domain.Exceptions;
+using AudioService.Domain.Interfaces;
+using AudioService.Api.Security;
 
 namespace AudioService.Api.Controllers;
 
@@ -14,12 +16,47 @@ public class AudioChannelsController : ControllerBase
 {
     private readonly IAudioChannelService _audioChannelService;
     private readonly ILogger<AudioChannelsController> _logger;
+    private readonly IGroupAccessChecker _groupAccessChecker;
+    private readonly IAudioChannelRepository _channelRepository;
+    private readonly GroupMembershipVerifier _membershipVerifier;
 
-    public AudioChannelsController(IAudioChannelService audioChannelService, ILogger<AudioChannelsController> logger)
+    public AudioChannelsController(
+        IAudioChannelService audioChannelService,
+        IGroupAccessChecker groupAccessChecker,
+        IAudioChannelRepository channelRepository,
+        GroupMembershipVerifier membershipVerifier,
+        ILogger<AudioChannelsController> logger)
     {
+        _groupAccessChecker = groupAccessChecker;
+        _channelRepository = channelRepository;
+        _membershipVerifier = membershipVerifier;
         _audioChannelService = audioChannelService;
         _logger = logger;
     }
+
+    // Список каналов, сами каналы и участники раньше отдавались любому вошедшему пользователю,
+    // в том числе по закрытым паролем группам. Теперь - только участникам группы.
+    private async Task<bool> IsGroupMemberAsync(string groupId, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (string.IsNullOrEmpty(userId))
+        {
+            return false;
+        }
+
+        // Сначала локальная копия участников; если в ней нет (вступил секунду назад,
+        // событие ещё не дошло) - спрашиваем GroupsService
+        if (await _groupAccessChecker.IsGroupMemberAsync(groupId, userId, cancellationToken))
+        {
+            return true;
+        }
+
+        return await _membershipVerifier.IsMemberAsync(
+            groupId, userId, GroupMembershipVerifier.ExtractToken(Request), cancellationToken);
+    }
+
+    private ObjectResult NotAMember() =>
+        StatusCode(StatusCodes.Status403Forbidden, new { error = "User must be a member of the group" });
 
     [HttpPost]
     [ProducesResponseType(typeof(AudioChannelDto), StatusCodes.Status201Created)]
@@ -68,7 +105,8 @@ public class AudioChannelsController : ControllerBase
     {
         var channelDto = await _audioChannelService.GetAudioChannelByIdAsync(id, cancellationToken);
 
-        if (channelDto == null)
+        // Чужой канал не отличаем от несуществующего
+        if (channelDto == null || !await IsGroupMemberAsync(channelDto.GroupId, cancellationToken))
         {
             return NotFound(new { error = $"Audio channel with ID '{id}' was not found" });
         }
@@ -81,6 +119,11 @@ public class AudioChannelsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IEnumerable<AudioChannelDto>>> GetChannelsByGroupId(string groupId, CancellationToken cancellationToken = default)
     {
+        if (!await IsGroupMemberAsync(groupId, cancellationToken))
+        {
+            return NotAMember();
+        }
+
         var channels = await _audioChannelService.GetChannelsByGroupIdAsync(groupId, cancellationToken);
         return Ok(channels);
     }
@@ -224,6 +267,12 @@ public class AudioChannelsController : ControllerBase
     {
         try
         {
+            var channel = await _channelRepository.GetByIdAsync(id, cancellationToken);
+            if (channel == null || !await IsGroupMemberAsync(channel.GroupId, cancellationToken))
+            {
+                return NotFound(new { error = $"Audio channel with ID '{id}' was not found" });
+            }
+
             var participants = await _audioChannelService.GetChannelParticipantsAsync(id, cancellationToken);
             return Ok(participants);
         }
@@ -258,6 +307,14 @@ public class AudioChannelsController : ControllerBase
 
         try
         {
+            // Имя берём из токена, а не из запроса: иначе можно было представиться кем угодно
+            // (и подставить произвольный текст в список участников у всех, кто смотрит группу)
+            var nickname = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue("nickname");
+            if (!string.IsNullOrWhiteSpace(nickname))
+            {
+                dto.DisplayName = nickname;
+            }
+
             await _audioChannelService.RegisterParticipantJoinedAsync(id, userIdClaim, dto, cancellationToken);
             return Ok(new { success = true });
         }

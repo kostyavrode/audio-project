@@ -6,6 +6,7 @@ public interface IAudioChannelRepository
 {
     Task<AudioChannel?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<IEnumerable<AudioChannel>> GetByGroupIdAsync(string groupId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<AudioChannel>> GetAllAsync(CancellationToken cancellationToken = default);
     Task AddAsync(AudioChannel channel, CancellationToken cancellationToken = default);
     Task UpdateAsync(AudioChannel channel, CancellationToken cancellationToken = default);
     Task DeleteAsync(AudioChannel channel, CancellationToken cancellationToken = default);
