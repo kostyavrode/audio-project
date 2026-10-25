@@ -198,10 +198,13 @@ services:
     image: prom/node-exporter:latest
     container_name: audio-node-exporter
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:9100:9100"
+    # host network/pid: иначе exporter видит только eth0 и UDP-счётчики своего контейнера
+    network_mode: host
+    pid: host
     command:
       - "--path.rootfs=/host"
+      # слушаем только на docker0 — Prometheus достучится, снаружи порт закрыт
+      - "--web.listen-address=172.17.0.1:9100"
     volumes:
       - "/:/host:ro,rslave"
 
@@ -214,6 +217,8 @@ services:
         - "--config.file=/etc/prometheus/prometheus.yml"
         - "--storage.tsdb.path=/prometheus"
         - "--web.enable-lifecycle"
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
       ports:
         - "127.0.0.1:9090:9090"
       volumes:
