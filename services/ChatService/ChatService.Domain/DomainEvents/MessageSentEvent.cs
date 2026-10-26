@@ -10,8 +10,9 @@ public class MessageSentEvent : IDomainEvent
     public string GroupId { get; }
     public string UserId { get; }
     public string Content { get; }
+    public int? StickerId { get; }
 
-    public MessageSentEvent(string messageId, string groupId, string userId, string content, DateTime occurredAt)
+    public MessageSentEvent(string messageId, string groupId, string userId, string content, DateTime occurredAt, int? stickerId = null)
     {
         EventId = Guid.NewGuid();
         OccurredAt = occurredAt;
@@ -19,5 +20,6 @@ public class MessageSentEvent : IDomainEvent
         GroupId = groupId;
         UserId = userId;
         Content = content;
+        StickerId = stickerId;
     }
 }

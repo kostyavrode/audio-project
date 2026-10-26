@@ -5,6 +5,8 @@ using ChatService.Domain.Interfaces;
 using ChatService.Infrastructure.Repository;
 using ChatService.Application.Services;
 using ChatService.Application.Validators;
+using ChatService.Application.Stickers;
+using ChatService.Infrastructure.Stickers;
 using ChatService.Api.Hubs;
 using ChatService.Api.Middleware;
 using Common.Monitoring;
@@ -111,6 +113,12 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IGroupMemberRepository, GroupMemberRepository>();
 
 builder.Services.AddScoped<IMessageService, MessageService>();
+
+var stickerCatalogPath = builder.Configuration.GetSection(StickerCatalogSettings.SectionName)
+    .Get<StickerCatalogSettings>()?.CatalogPath ?? new StickerCatalogSettings().CatalogPath;
+stickerCatalogPath = Path.Combine(builder.Environment.ContentRootPath, stickerCatalogPath);
+builder.Services.AddSingleton<IStickerCatalog>(sp =>
+    new JsonStickerCatalog(stickerCatalogPath, sp.GetRequiredService<ILogger<JsonStickerCatalog>>()));
 builder.Services.AddHttpClient();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ChatService.Api.Security.GroupMembershipVerifier>();

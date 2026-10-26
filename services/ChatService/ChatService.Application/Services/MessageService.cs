@@ -1,4 +1,5 @@
 using ChatService.Application.DTOs;
+using ChatService.Application.Stickers;
 using ChatService.Domain.Entities;
 using ChatService.Domain.Exceptions;
 using ChatService.Domain.Interfaces;
@@ -10,15 +11,18 @@ public class MessageService : IMessageService
 {
     private readonly IMessageRepository _messageRepository;
     private readonly IGroupMemberRepository _groupMemberRepository;
-    private readonly ILogger _logger; 
+    private readonly IStickerCatalog _stickerCatalog;
+    private readonly ILogger _logger;
 
     public MessageService(
         IMessageRepository messageRepository,
         IGroupMemberRepository groupMemberRepository,
+        IStickerCatalog stickerCatalog,
         ILogger<MessageService> logger)
     {
         _messageRepository = messageRepository;
         _groupMemberRepository = groupMemberRepository;
+        _stickerCatalog = stickerCatalog;
         _logger = logger;
     }
 
@@ -42,7 +46,20 @@ public class MessageService : IMessageService
         }
 
         var messageId = Guid.NewGuid().ToString();
-        var message = Message.Create(messageId, sendMessageDto.GroupId, userId, sendMessageDto.Content, userNickName);
+        Message message;
+        if (sendMessageDto.StickerId is int stickerId)
+        {
+            // Только стикеры из каталога: иначе можно подсунуть ID, для которого нет картинки
+            if (!_stickerCatalog.Exists(stickerId))
+            {
+                throw new DomainException($"Sticker {stickerId} not found");
+            }
+            message = Message.CreateSticker(messageId, sendMessageDto.GroupId, userId, stickerId, userNickName);
+        }
+        else
+        {
+            message = Message.Create(messageId, sendMessageDto.GroupId, userId, sendMessageDto.Content, userNickName);
+        }
 
         await _messageRepository.AddAsync(message, cancellationToken);
         await _messageRepository.SaveChangesAsync(cancellationToken);
@@ -110,7 +127,9 @@ public class MessageService : IMessageService
             UserId = message.UserId,
             Content = message.Content,
             CreatedAt = message.CreatedAt,
-            UserNickName = message.UserNickName
+            UserNickName = message.UserNickName,
+            Type = message.Type == MessageType.Sticker ? MessageTypes.Sticker : MessageTypes.Text,
+            StickerId = message.StickerId
         };
     }
 }

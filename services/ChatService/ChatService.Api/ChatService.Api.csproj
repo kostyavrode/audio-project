@@ -19,6 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Каталог стикеров; на сервере можно подменить файл через volume -->
+    <Content Update="Stickers\catalog.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ChatService.Application\ChatService.Application.csproj" />
     <ProjectReference Include="..\ChatService.Infrastructure\ChatService.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\shared\Common.Monitoring\Common.Monitoring.csproj" />

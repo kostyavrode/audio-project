@@ -33,6 +33,12 @@ public class MessageConfiguration : IEntityTypeConfiguration<Message>
 
         builder.Property(m => m.UserNickName)
             .IsRequired();
+
+        // Хранится числом; у старых сообщений после миграции 0 = Text
+        builder.Property(m => m.Type)
+            .IsRequired();
+
+        builder.Property(m => m.StickerId);
         
         builder.HasIndex(m => m.GroupId);
         builder.HasIndex(m => new { m.GroupId, m.CreatedAt });

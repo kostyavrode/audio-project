@@ -114,6 +114,10 @@ services:
       context: .
       dockerfile: services/ChatService/ChatService.Api/Dockerfile
     container_name: audio-chat-service
+    # Каталог стикеров из репозитория: после git pull подхватывается без пересборки.
+    # Монтируем папку, а не файл - иначе git pull подменит файл, а контейнер продолжит видеть старый.
+    volumes:
+      - ./services/ChatService/ChatService.Api/Stickers:/app/Stickers:ro
     env_file:
       - .env
     environment:

@@ -9,9 +9,19 @@ public class SendMessageDtoValidator : AbstractValidator<SendMessageDto>
     {
         RuleFor(x => x.GroupId)
             .NotEmpty().WithMessage("Group ID is required");
-        
-        RuleFor(x => x.Content)
-            .NotEmpty().WithMessage("Message content is required")
-            .MaximumLength(2000).WithMessage("Message content cannot exceed 2000 characters");
+
+        // Сообщение - либо текст, либо стикер
+        When(x => x.StickerId == null, () =>
+        {
+            RuleFor(x => x.Content)
+                .NotEmpty().WithMessage("Message content is required")
+                .MaximumLength(2000).WithMessage("Message content cannot exceed 2000 characters");
+        }).Otherwise(() =>
+        {
+            RuleFor(x => x.StickerId)
+                .GreaterThan(0).WithMessage("Sticker ID must be positive");
+            RuleFor(x => x.Content)
+                .Empty().WithMessage("Sticker message cannot contain text");
+        });
     }
 }

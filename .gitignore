@@ -9,6 +9,7 @@
 *.sh
 *.txt
 *.ps1
+!tools/stickers/*.ps1
 *.md
 
 # Docker
