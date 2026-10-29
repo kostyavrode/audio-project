@@ -43,6 +43,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         // Примечание: PostgreSQL поддерживает case-insensitive индексы через lower()
         
         // PasswordHash
+        // У существующих пользователей после миграции false
+        builder.Property(u => u.IsGuest)
+            .IsRequired();
+
         builder.Property(u => u.PasswordHash)
             .IsRequired()
             .HasMaxLength(256); // ASP.NET Core Identity использует BCrypt, который дает ~60 символов, но оставляем запас

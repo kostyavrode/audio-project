@@ -9,4 +9,6 @@ public class UserDto
     public string NickName { get; set; } = string.Empty;
     
     public DateTime CreatedAt { get; set; }
+
+    public bool IsGuest { get; set; }
 }

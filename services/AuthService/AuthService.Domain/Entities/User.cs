@@ -13,7 +13,17 @@ public class User : BaseEntity
     public NickName NickName { get; private set; } = null!;
     
     public RefreshToken? RefreshToken { get; private set; }
-    
+
+    // Гость: вошёл без регистрации, имя выдано автоматически, войти по паролю нельзя
+    public bool IsGuest { get; private set; }
+
+    public static User RegisterGuest(string id, NickName nickName, string unusablePasswordHash)
+    {
+        var user = Register(id, null, nickName, unusablePasswordHash);
+        user.IsGuest = true;
+        return user;
+    }
+
     public static User Register(string id, Email? email, NickName nickName, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(id))

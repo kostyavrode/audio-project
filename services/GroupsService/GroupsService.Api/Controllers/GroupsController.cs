@@ -41,6 +41,12 @@ public class GroupsController : ControllerBase
             return Unauthorized(new { error = "User ID not found in token" });
         }
         
+        // Гости (вход без регистрации) групп не создают
+        if (User.FindFirstValue("guest") == "true")
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "Гости не могут создавать группы. Зарегистрируйтесь, чтобы создать свою." });
+        }
+        
         var nickName = User.FindFirstValue("nickname") 
             ?? User.FindFirstValue(ClaimTypes.Name) 
             ?? User.FindFirstValue("name")
@@ -293,6 +299,38 @@ public class GroupsController : ControllerBase
         {
             _logger.LogWarning(ex, "Invalid operation: {Message}", ex.Message);
             return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>Ключ ссылки-приглашения (по нему вступают без пароля). ?reset=true - выдать новый.</summary>
+    [HttpPost("{id}/invite")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetInviteCode(
+        string id,
+        [FromQuery] bool reset = false,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(new { error = "User ID not found in token" });
+        }
+        
+        try
+        {
+            var code = await _groupService.GetInviteCodeAsync(id, userId, reset, cancellationToken);
+            return Ok(new { inviteCode = code });
+        }
+        catch (GroupNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            // 403, а не 401: клиент на 401 пытается обновить токен
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
         }
     }
 

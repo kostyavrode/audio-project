@@ -77,6 +77,12 @@ public class AudioChannelsController : ControllerBase
             return Unauthorized(new { error = "User ID not found in token" });
         }
 
+        // Гости (вход без регистрации) каналов не создают, даже если их назначили админом группы
+        if (User.FindFirstValue("guest") == "true")
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = "Гости не могут создавать каналы" });
+        }
+
         try
         {
             var channelDto = await _audioChannelService.CreateAudioChannelAsync(createDto, userIdClaim, cancellationToken);

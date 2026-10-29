@@ -19,7 +19,7 @@ public class JwtTokenGenerator
         _tokenHandler = new JwtSecurityTokenHandler();
     }
     
-    public string GenerateAccessToken(string userId, Email? email, NickName nickName)
+    public string GenerateAccessToken(string userId, Email? email, NickName nickName, bool isGuest = false)
     {
         var claims = new List<Claim>
         {
@@ -34,6 +34,12 @@ public class JwtTokenGenerator
         if (email != null && email.HasValue)
         {
             claims.Add(new Claim(JwtRegisteredClaimNames.Email, email.Value!));
+        }
+
+        // Остальные сервисы по нему запрещают гостю создавать группы и каналы
+        if (isGuest)
+        {
+            claims.Add(new Claim("guest", "true"));
         }
         
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));

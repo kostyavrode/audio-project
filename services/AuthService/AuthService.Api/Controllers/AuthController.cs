@@ -41,7 +41,7 @@ public class AuthController : ControllerBase
         
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName, userDto.IsGuest);
         var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         
         var refreshTokenString = await _authService.IssueRefreshTokenAsync(
@@ -50,6 +50,28 @@ public class AuthController : ControllerBase
         SetCookie(_cookieSettings.AccessTokenCookieName, accessToken, TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
         SetCookie(_cookieSettings.RefreshTokenCookieName, refreshTokenString, TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
         
+        return Ok(userDto);
+    }
+
+    /// <summary>
+    /// Вход без регистрации: создаёт гостевой аккаунт «Гость-NNNN» и сразу выдаёт cookie, как после регистрации.
+    /// </summary>
+    [HttpPost("guest")]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("auth-guest")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    public async Task<ActionResult<UserDto>> Guest(CancellationToken cancellationToken = default)
+    {
+        var userDto = await _authService.CreateGuestAsync(cancellationToken);
+        var nickName = NickName.Create(userDto.NickName);
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, null, nickName, isGuest: true);
+        var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+        var refreshTokenString = await _authService.IssueRefreshTokenAsync(
+            userDto.Id, _jwtTokenGenerator.GenerateRefreshToken(), refreshTokenExpiresAt, cancellationToken);
+
+        SetCookie(_cookieSettings.AccessTokenCookieName, accessToken, TimeSpan.FromMinutes(_jwtSettings.AccessTokenExpirationMinutes));
+        SetCookie(_cookieSettings.RefreshTokenCookieName, refreshTokenString, TimeSpan.FromDays(_jwtSettings.RefreshTokenExpirationDays));
+
         return Ok(userDto);
     }
 
@@ -64,7 +86,7 @@ public class AuthController : ControllerBase
         
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
+        var accessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName, userDto.IsGuest);
         var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         
         var refreshTokenString = await _authService.IssueRefreshTokenAsync(
@@ -93,7 +115,7 @@ public class AuthController : ControllerBase
         
         var email = Email.Create(userDto.Email);
         var nickName = NickName.Create(userDto.NickName);
-        var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName);
+        var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(userDto.Id, email, nickName, userDto.IsGuest);
         var newRefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
 
         // Тот же токен с продлённым сроком (см. IssueRefreshTokenAsync): повторный или

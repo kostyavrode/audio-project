@@ -21,6 +21,7 @@ public class GroupConfiguration : IEntityTypeConfiguration<Group>
         builder.Property(g => g.PasswordHash).HasMaxLength(255);
         
         builder.Property(g => g.OwnerId).IsRequired().HasMaxLength(50);
+        builder.Property(g => g.InviteCode).HasMaxLength(64);
         
         builder.Property(g => g.CreatedAt).IsRequired();    
         

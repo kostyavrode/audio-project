@@ -6,6 +6,9 @@ public interface IAuthService
 {
     Task<UserDto> RegisterAsync(RegisterDto registerDto, CancellationToken cancellationToken = default);
     
+    /// <summary>Создаёт гостевой аккаунт с автоматическим именем «Гость-NNNN».</summary>
+    Task<UserDto> CreateGuestAsync(CancellationToken cancellationToken = default);
+    
     Task<UserDto> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default);
     
     Task<UserDto> GetCurrentUserAsync(string userId, CancellationToken cancellationToken = default);

@@ -145,7 +145,8 @@ public class GroupService : IGroupService
             throw new InvalidOperationException("User is already a member of this group");
         }
         
-        if (!string.IsNullOrEmpty(group.PasswordHash))
+        // По ссылке-приглашению пароль не спрашиваем
+        if (!string.IsNullOrEmpty(group.PasswordHash) && !group.IsValidInviteCode(joinGroupDto.InviteCode))
         {
             if (string.IsNullOrEmpty(joinGroupDto.Password))
             {
@@ -169,6 +170,28 @@ public class GroupService : IGroupService
         await _groupRepository.SaveChangesAsync(cancellationToken);
         
         _logger.LogInformation("User {UserId} joined group {GroupId}", userId, groupId);
+    }
+    
+    public async Task<string> GetInviteCodeAsync(string groupId, string userId, bool reset, CancellationToken cancellationToken = default)
+    {
+        var group = await _groupRepository.GetByIdAsync(groupId, cancellationToken);
+        
+        if (group == null)
+        {
+            throw new GroupNotFoundException(groupId);
+        }
+        
+        // Приглашать без пароля могут только владелец и админы
+        var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+        if (member == null || (member.Role != GroupMemberRole.Owner && member.Role != GroupMemberRole.Admin))
+        {
+            throw new UnauthorizedAccessException("Only the owner or an admin can create invite links");
+        }
+        
+        var code = group.GetOrCreateInviteCode(reset);
+        await _groupRepository.UpdateAsync(group, cancellationToken);
+        await _groupRepository.SaveChangesAsync(cancellationToken);
+        return code;
     }
     
     public async Task LeaveGroupAsync(string groupId, string userId, CancellationToken cancellationToken = default)

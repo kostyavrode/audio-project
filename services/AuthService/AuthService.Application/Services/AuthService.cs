@@ -55,13 +55,48 @@ public class AuthService : IAuthService
         return MapToUserDto(user);
     }
     
+    public async Task<UserDto> CreateGuestAsync(CancellationToken cancellationToken = default)
+    {
+        // Имя вида «Гость-4821»; если занято - пробуем другое, после нескольких неудач берём длиннее
+        NickName? nickName = null;
+        for (var attempt = 0; attempt < 12 && nickName == null; attempt++)
+        {
+            var number = attempt < 8
+                ? Random.Shared.Next(1000, 10000)
+                : Random.Shared.Next(100000, 1000000);
+            var candidate = NickName.Create($"Гость-{number}");
+            if (!await _userRepository.ExistsByNickNameAsync(candidate, cancellationToken: cancellationToken))
+            {
+                nickName = candidate;
+            }
+        }
+        if (nickName == null)
+        {
+            throw new InvalidOperationException("Could not pick a free guest name");
+        }
+
+        // Пароль, который никто не знает: войти в гостевой аккаунт можно только по его cookie
+        var unusablePassword = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+        var passwordHash = _passwordHasher.HashPassword(new User(), unusablePassword);
+        var userId = Guid.NewGuid().ToString();
+        var user = User.RegisterGuest(userId, nickName, passwordHash);
+
+        await _userRepository.AddAsync(user, cancellationToken);
+        await _userRepository.SaveChangesAsync(cancellationToken);
+        user.ClearDomainEvents();
+
+        _logger.LogInformation("Guest created: {UserId}, NickName: {NickName}", userId, nickName.Value);
+        return MapToUserDto(user);
+    }
+
     public async Task<UserDto> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default)
     {
         var nickName = NickName.Create(loginDto.NickName);
         
         var user = await _userRepository.GetByNickNameAsync(nickName, cancellationToken);
         
-        if (user == null)
+        // В гостевой аккаунт по паролю не входят
+        if (user == null || user.IsGuest)
         {
             throw new InvalidCredentialsException();
         }
@@ -175,7 +210,8 @@ public class AuthService : IAuthService
             Id = user.Id,
             Email = user.Email?.Value,
             NickName = user.NickName.Value,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            IsGuest = user.IsGuest
         };
     }
 }

@@ -161,6 +161,16 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0
         }));
 
+    // Гостевые аккаунты создаются одним кликом - ограничиваем, чтобы ими не засыпали базу
+    options.AddPolicy("auth-guest", httpContext => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        "guest:" + ClientKey(httpContext),
+        _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(10),
+            QueueLimit = 0
+        }));
+
     options.AddPolicy("auth-register", httpContext => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
         "register:" + ClientKey(httpContext),
         _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions

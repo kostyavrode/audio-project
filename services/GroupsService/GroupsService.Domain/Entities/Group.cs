@@ -14,12 +14,39 @@ public class Group : BaseEntity
     
     public string OwnerId { get; set; } = String.Empty;
 
+    // Ключ ссылки-приглашения: по нему вступают без пароля. Пусто - ссылку ещё не создавали
+    public string? InviteCode { get; private set; }
+
     private readonly List<GroupMember> _members = new();
     
     public IReadOnlyCollection<GroupMember> Members => _members.AsReadOnly();
 
     private Group()
     {
+    }
+
+    /// <summary>Ключ приглашения; создаётся при первом запросе. reset - выдать новый (старые ссылки перестанут работать).</summary>
+    public string GetOrCreateInviteCode(bool reset = false)
+    {
+        if (reset || string.IsNullOrEmpty(InviteCode))
+        {
+            // 16 случайных байт в виде, пригодном для URL
+            InviteCode = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(16))
+                .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+            MarkAsUpdated();
+        }
+        return InviteCode;
+    }
+
+    public bool IsValidInviteCode(string? code)
+    {
+        if (string.IsNullOrEmpty(InviteCode) || string.IsNullOrEmpty(code))
+        {
+            return false;
+        }
+        return System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+            System.Text.Encoding.UTF8.GetBytes(InviteCode),
+            System.Text.Encoding.UTF8.GetBytes(code));
     }
 
     public static Group Create(string id, string name, string? description, string? passwordHash, string ownerId, string ownerNickName)
