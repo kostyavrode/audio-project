@@ -114,6 +114,19 @@ public class AuthService : IAuthService
         return MapToUserDto(user);
     }
         
+    public async Task<bool> NickNameExistsAsync(string nickName, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _userRepository.ExistsByNickNameAsync(NickName.Create(nickName), cancellationToken: cancellationToken);
+        }
+        catch (ArgumentException)
+        {
+            // Строка, которая не может быть ником, - такого пользователя точно нет
+            return false;
+        }
+    }
+
     public async Task<UserDto> GetCurrentUserAsync(string userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);

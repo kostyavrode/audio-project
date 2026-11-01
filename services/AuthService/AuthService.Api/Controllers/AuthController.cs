@@ -131,6 +131,15 @@ public class AuthController : ControllerBase
         return Ok(userDto);
     }
 
+    /// <summary>Есть ли пользователь с таким ником: проверка перед личным приглашением.</summary>
+    [HttpGet("user-exists")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> UserExists([FromQuery] string nickName, CancellationToken cancellationToken = default)
+    {
+        return Ok(new { exists = await _authService.NickNameExistsAsync(nickName ?? string.Empty, cancellationToken) });
+    }
+
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]

@@ -95,8 +95,25 @@ builder.Services.Configure<OutboxPublisherSettings>(builder.Configuration.GetSec
 builder.Services.AddHostedService<OutboxPublisher>();
 
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+// Рассылка уведомлений: не больше 10 в минуту с одного аккаунта
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("group-notices", httpContext => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+        httpContext.User.FindFirst("sub")?.Value ?? httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1)
+        }));
+});
+
+builder.Services.AddScoped<IGroupInviteRepository, GroupInviteRepository>();
+builder.Services.AddScoped<IGroupNoticeRepository, GroupNoticeRepository>();
 
 builder.Services.AddScoped<IGroupService, GroupService>();
+builder.Services.AddScoped<IGroupInviteService, GroupInviteService>();
+builder.Services.AddScoped<IGroupNoticeService, GroupNoticeService>();
 
 builder.Services.AddSingleton<IPasswordHasher<Group>, PasswordHasher<Group>>();
 
@@ -180,6 +197,7 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 app.MapPrometheusScrapeEndpoint();
 

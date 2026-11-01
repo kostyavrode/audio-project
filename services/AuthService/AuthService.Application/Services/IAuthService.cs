@@ -11,6 +11,9 @@ public interface IAuthService
     
     Task<UserDto> LoginAsync(LoginDto loginDto, CancellationToken cancellationToken = default);
     
+    /// <summary>Есть ли пользователь с таким ником (для личных приглашений).</summary>
+    Task<bool> NickNameExistsAsync(string nickName, CancellationToken cancellationToken = default);
+
     Task<UserDto> GetCurrentUserAsync(string userId, CancellationToken cancellationToken = default);
     
     Task<UserDto> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);

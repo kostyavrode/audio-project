@@ -27,6 +27,8 @@ public class GroupsDbContext : DbContext
 
     public DbSet<Group> Groups { get; set; } = null!;
     public DbSet<GroupMember> GroupMembers { get; set; } = null!;
+    public DbSet<GroupInvite> GroupInvites { get; set; } = null!;
+    public DbSet<GroupNotice> GroupNotices { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
