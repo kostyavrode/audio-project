@@ -17,6 +17,9 @@ public class Group : BaseEntity
     // Ключ ссылки-приглашения: по нему вступают без пароля. Пусто - ссылку ещё не создавали
     public string? InviteCode { get; private set; }
 
+    // Запрет звуковых эффектов в голосовых каналах группы
+    public bool SoundEffectsDisabled { get; set; }
+
     private readonly List<GroupMember> _members = new();
     
     public IReadOnlyCollection<GroupMember> Members => _members.AsReadOnly();

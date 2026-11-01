@@ -7,6 +7,12 @@ public class GroupDto
     public string? Description { get; set; }
     public string OwnerId { get; set; } = string.Empty;
     public bool HasPassword { get; set; }
+    public bool SoundEffectsDisabled { get; set; }
     public int MemberCount { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+public class SetSoundEffectsDto
+{
+    public bool Disabled { get; set; }
 }

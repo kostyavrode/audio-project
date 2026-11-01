@@ -172,6 +172,26 @@ public class GroupService : IGroupService
         _logger.LogInformation("User {UserId} joined group {GroupId}", userId, groupId);
     }
     
+    public async Task SetSoundEffectsDisabledAsync(string groupId, string userId, bool disabled, CancellationToken cancellationToken = default)
+    {
+        var group = await _groupRepository.GetByIdAsync(groupId, cancellationToken);
+
+        if (group == null)
+        {
+            throw new GroupNotFoundException(groupId);
+        }
+
+        var member = group.Members.FirstOrDefault(m => m.UserId == userId);
+        if (member == null || (member.Role != GroupMemberRole.Owner && member.Role != GroupMemberRole.Admin))
+        {
+            throw new UnauthorizedAccessException("Only the owner or an admin can change this setting");
+        }
+
+        group.SoundEffectsDisabled = disabled;
+        await _groupRepository.UpdateAsync(group, cancellationToken);
+        await _groupRepository.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<string> GetInviteCodeAsync(string groupId, string userId, bool reset, CancellationToken cancellationToken = default)
     {
         var group = await _groupRepository.GetByIdAsync(groupId, cancellationToken);
@@ -300,6 +320,7 @@ public class GroupService : IGroupService
             Description = group.Description,
             OwnerId = group.OwnerId,
             HasPassword = !string.IsNullOrEmpty(group.PasswordHash),
+            SoundEffectsDisabled = group.SoundEffectsDisabled,
             MemberCount = group.Members.Count,
             CreatedAt = group.CreatedAt
         };

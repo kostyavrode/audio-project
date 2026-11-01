@@ -303,6 +303,36 @@ public class GroupsController : ControllerBase
     }
 
     /// <summary>Ключ ссылки-приглашения (по нему вступают без пароля). ?reset=true - выдать новый.</summary>
+    [HttpPut("{id}/sound-effects")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetSoundEffects(
+        string id,
+        [FromBody] SetSoundEffectsDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(new { error = "User ID not found in token" });
+        }
+
+        try
+        {
+            await _groupService.SetSoundEffectsDisabledAsync(id, userId, dto.Disabled, cancellationToken);
+            return NoContent();
+        }
+        catch (GroupNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+    }
+
     [HttpPost("{id}/invite")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
