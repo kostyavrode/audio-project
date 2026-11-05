@@ -60,6 +60,7 @@ public class GroupNoticesController : ControllerBase
 
     /// <summary>Уведомления, которые текущий пользователь ещё не закрыл.</summary>
     [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<ActionResult<IReadOnlyList<GroupNoticeDto>>> GetPending(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(UserId))

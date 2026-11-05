@@ -57,6 +57,7 @@ public class GroupInvitesController : ControllerBase
 
     /// <summary>Приглашения, на которые текущий пользователь ещё не ответил.</summary>
     [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<ActionResult<IReadOnlyList<GroupInviteDto>>> GetPending(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(NickName))
